@@ -19,7 +19,7 @@ export function Documents() {
           <div className="flex flex-col gap-2">
             {DOC_CATEGORIES.map(c => (
               <button key={c} onClick={() => setCat(c)}
-                className={"flex flex-col items-start px-3 py-2.5 min-h-[44px] border cursor-pointer text-left w-full " +
+                className={"flex flex-col items-start px-3 py-2.5 min-h-[33px] border cursor-pointer text-left w-full " +
                   (cat === c ? "border-accent bg-accent-100" : "border-line bg-white hover:border-accent")}>
                 <span className={"text-[14px] " + (cat === c ? "font-bold" : "font-medium")}>{c}</span>
                 <span className="text-[12px] text-muted">{(state.docs[c] ?? []).length} files</span>
@@ -105,7 +105,7 @@ export function Transport() {
           <div className="p-5 flex flex-wrap gap-3">
             {paperAlerts.map((a, i) => (
               <Link key={i} to={`/transport/${a.id}`}
-                className="flex items-center gap-3 border border-line px-3 min-h-[44px] text-ink no-underline hover:no-underline hover:border-accent">
+                className="flex items-center gap-3 border border-line px-3 min-h-[33px] text-ink no-underline hover:no-underline hover:border-accent">
                 <span className="text-[14px] font-semibold">{a.bus}</span>
                 <span className="text-[13px] text-muted">{a.kind}</span>
                 <span className="text-[13px] text-warn font-semibold">{a.date}</span>

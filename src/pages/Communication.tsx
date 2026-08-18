@@ -30,7 +30,7 @@ export default function Communication() {
           <div className="flex flex-col gap-2">
             {Object.keys(AUDIENCES).map(a => (
               <button key={a} onClick={() => setAudience(a)}
-                className={"flex flex-col items-start gap-0.5 px-3.5 py-3 min-h-[44px] border cursor-pointer text-left w-full " +
+                className={"flex flex-col items-start gap-0.5 px-3.5 py-3 min-h-[33px] border cursor-pointer text-left w-full " +
                   (audience === a ? "border-accent bg-accent-100" : "border-line bg-white hover:border-accent")}>
                 <span className={"text-[14.5px] " + (audience === a ? "font-bold" : "font-medium")}>{a}</span>
                 <span className="text-[12.5px] text-muted">{AUDIENCES[a]} parents</span>

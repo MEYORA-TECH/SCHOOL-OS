@@ -73,7 +73,7 @@ export default function TeacherDashboard() {
               const last = myLog.filter(w => w.cls === c).sort((a, b) => b.syllabusPct - a.syllabusPct)[0];
               const pct = last ? last.syllabusPct : 45;
               return (
-                <div key={c} className="grid items-center gap-3.5" style={{ gridTemplateColumns: "56px 1fr 44px" }}>
+                <div key={c} className="grid items-center gap-3.5" style={{ gridTemplateColumns: "56px 1fr 33px" }}>
                   <span className="text-[14px] font-semibold">{c}</span>
                   <Bar pct={pct} />
                   <span className="text-[13.5px] text-right text-muted">{pct}%</span>

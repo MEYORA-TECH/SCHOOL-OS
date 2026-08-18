@@ -116,7 +116,7 @@ export default function Dashboard() {
           <div className="kicker mb-3">Class-wise today</div>
           <div className="grid grid-cols-2 gap-x-8 gap-y-3">
             {Object.entries(state.classRates).map(([cls, pct]) => (
-              <div key={cls} className="grid items-center gap-3" style={{ gridTemplateColumns: "50px 1fr 44px" }}>
+              <div key={cls} className="grid items-center gap-3" style={{ gridTemplateColumns: "50px 1fr 33px" }}>
                 <span className="text-[14px] font-semibold">{cls}</span>
                 <Bar pct={pct} color={pct >= 95 ? "#15803d" : pct >= 90 ? "#1d4ed8" : "#b45309"} />
                 <span className="text-[13.5px] text-right text-muted">{pct}%</span>
@@ -157,7 +157,7 @@ export default function Dashboard() {
           <div className="kicker mb-3">Term-wise (sample roll)</div>
           <div className="flex flex-col gap-3">
             {termRows.map(r => (
-              <div key={r.term} className="grid items-center gap-3" style={{ gridTemplateColumns: "62px 1fr 44px" }}>
+              <div key={r.term} className="grid items-center gap-3" style={{ gridTemplateColumns: "62px 1fr 33px" }}>
                 <span className="text-[14px] font-semibold">{r.term}</span>
                 <Bar pct={r.pct} color={r.pct >= 80 ? "#15803d" : r.pct >= 50 ? "#1d4ed8" : "#b45309"} />
                 <span className="text-[13.5px] text-right text-muted">{r.pct}%</span>

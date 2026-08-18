@@ -65,7 +65,7 @@ export default function Layout() {
                   to={to}
                   end={to === "/"}
                   className={({ isActive }) =>
-                    "flex items-center gap-3 w-full px-2.5 min-h-[44px] text-[14.5px] no-underline hover:no-underline border-l-[3px] " +
+                    "flex items-center gap-3 w-full px-2.5 min-h-[33px] text-[14.5px] no-underline hover:no-underline border-l-[3px] " +
                     (isActive
                       ? "bg-accent-100 text-accent-700 font-bold border-accent"
                       : "text-ink font-medium border-transparent hover:bg-accent-100")

@@ -181,7 +181,7 @@ function TeacherDetail({ teacher: t, back, own }: { teacher: Teacher; back: stri
               {t.classes.map(c => {
                 const last = log.filter(w => w.cls === c)[0];
                 return (
-                  <div key={c} className="grid items-center gap-3.5" style={{ gridTemplateColumns: "56px 1fr 44px" }}>
+                  <div key={c} className="grid items-center gap-3.5" style={{ gridTemplateColumns: "56px 1fr 33px" }}>
                     <span className="text-[14px] font-semibold">{c}</span>
                     <Bar pct={last ? last.syllabusPct : 45} />
                     <span className="text-[13.5px] text-right text-muted">{last ? last.syllabusPct : 45}%</span>
@@ -294,7 +294,7 @@ function TeacherDetail({ teacher: t, back, own }: { teacher: Teacher; back: stri
             <h2 className="text-[17px] m-0 mb-3.5">Attendance this term</h2>
             <div className="flex flex-col gap-3.5">
               {[["June", 98], ["July", 94], ["August", t.attendance]].map(([m, p]) => (
-                <div key={m as string} className="grid items-center gap-3.5" style={{ gridTemplateColumns: "80px 1fr 44px" }}>
+                <div key={m as string} className="grid items-center gap-3.5" style={{ gridTemplateColumns: "80px 1fr 33px" }}>
                   <span className="text-[14px]">{m}</span>
                   <Bar pct={p as number} color="#15803d" />
                   <span className="text-[13.5px] text-right text-muted">{p}%</span>

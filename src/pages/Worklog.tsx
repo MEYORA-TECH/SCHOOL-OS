@@ -77,7 +77,7 @@ export default function Worklog() {
               </div>
               <div className="p-5 flex flex-wrap gap-3">
                 {missing.map(t => (
-                  <div key={t.id} className="flex items-center gap-3 border border-line px-3 min-h-[44px]">
+                  <div key={t.id} className="flex items-center gap-3 border border-line px-3 min-h-[33px]">
                     <Avatar name={t.name} size={28} />
                     <span className="text-[14px] font-semibold">{t.name}</span>
                     <span className="text-[12.5px] text-muted">{t.subject}</span>

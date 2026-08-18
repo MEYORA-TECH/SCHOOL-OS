@@ -82,7 +82,7 @@ export default function Login() {
           <div className="mt-9 pt-5 border-t-2 border-divider">
             <div className="text-[11px] uppercase tracking-[0.1em] text-muted mb-2.5">Quick demo sign-in</div>
             <div className="flex flex-col gap-2.5">
-              <button className="flex items-center gap-3 w-full min-h-[44px] p-3 bg-white border border-line cursor-pointer text-left hover:border-accent hover:bg-accent-100"
+              <button className="flex items-center gap-3 w-full min-h-[33px] p-3 bg-white border border-line cursor-pointer text-left hover:border-accent hover:bg-accent-100"
                 onClick={() => { dispatch({ type: "signIn", role: "principal" }); toast("Signed in as Principal", "Full access to all modules"); navigate("/"); }}>
                 <span className="w-[34px] h-[34px] bg-accent-200 text-accent-700 grid place-items-center font-extrabold text-[13px]">PR</span>
                 <span>
@@ -90,7 +90,7 @@ export default function Login() {
                   <span className="block text-[12.5px] text-muted">Principal · full access</span>
                 </span>
               </button>
-              <button className="flex items-center gap-3 w-full min-h-[44px] p-3 bg-white border border-line cursor-pointer text-left hover:border-accent hover:bg-accent-100"
+              <button className="flex items-center gap-3 w-full min-h-[33px] p-3 bg-white border border-line cursor-pointer text-left hover:border-accent hover:bg-accent-100"
                 onClick={() => { dispatch({ type: "signIn", role: "teacher", teacherId: "t0" }); toast("Signed in as Sudha Ramesh", "Mathematics · 10-A, 10-B, 9-A"); navigate("/"); }}>
                 <span className="w-[34px] h-[34px] bg-accent-200 text-accent-700 grid place-items-center font-extrabold text-[13px]">SR</span>
                 <span>

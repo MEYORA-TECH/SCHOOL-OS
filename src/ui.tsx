@@ -19,7 +19,7 @@ export function PageHeader({ title, sub, action }: { title: string; sub?: string
 
 export function BackLink({ to, children }: { to: string; children: React.ReactNode }) {
   return (
-    <Link to={to} className="flex items-center gap-2 text-muted text-[13.5px] no-underline hover:no-underline mb-3.5 w-fit min-h-[44px] items-center">
+    <Link to={to} className="flex items-center gap-2 text-muted text-[13.5px] no-underline hover:no-underline mb-3.5 w-fit min-h-[33px] items-center">
       <ArrowLeft size={15} /> {children}
     </Link>
   );

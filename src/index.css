@@ -14,15 +14,15 @@
 }
 
 @layer components {
-  /* Every control is 44px tall, everywhere — one size for low-tech users. */
-  .btn { @apply inline-flex items-center gap-2 h-11 px-[18px] text-[14px] font-bold cursor-pointer border whitespace-nowrap; }
+  /* Every control is 33px tall, everywhere — one size for low-tech users. */
+  .btn { @apply inline-flex items-center gap-2 h-[33px] px-[18px] text-[14px] font-bold cursor-pointer border whitespace-nowrap; }
   .btn-primary { @apply bg-accent text-white border-transparent hover:bg-accent-600; }
   .btn-secondary { @apply bg-white border-line hover:border-accent; }
   .btn-accent-soft { @apply bg-accent-100 text-accent-700 border-accent hover:bg-accent-200; }
   .btn-wa { @apply bg-[#0f7a4a] text-white border-transparent hover:bg-[#0c6a40]; }
   .btn:disabled { @apply opacity-45 cursor-not-allowed; }
   .link { @apply text-[13.5px] font-semibold underline cursor-pointer bg-transparent border-0 p-0 text-accent; }
-  .input, .select { @apply h-11 w-full border border-line bg-white px-3 text-[14.5px] text-ink; }
+  .input, .select { @apply h-[33px] w-full border border-line bg-white px-3 text-[14.5px] text-ink; }
   .panel { @apply bg-white border border-line; }
   .th { @apply text-left px-4 py-[13px] text-[11px] uppercase tracking-[0.08em] text-muted font-semibold; }
   .td { @apply px-4 py-[13px] text-[14px]; }
