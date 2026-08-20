@@ -1,11 +1,11 @@
 import { useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { MessageCircle, Phone, Search, X } from "lucide-react";
+import { MessageCircle, Phone, Wallet, X, SlidersHorizontal, Receipt } from "lucide-react";
 import {
   CLASS_LIST, PAYMENT_METHODS, SECTIONS, TERMS, inr, lakh, phoneHref, waHref
 } from "../data";
 import { useApp, useTotals } from "../store";
-import { BackLink, Badge, DataTable, EmptyState, Field, Modal, PageHeader, StatGrid } from "../ui";
+import { BackLink, Badge, DataTable, EmptyState, Field, Modal, PageHeader, Row, SearchInput, SectionCard, StatGrid } from "../ui";
 
 type Status = "All" | "Paid" | "Pending" | "Partly paid";
 
@@ -21,6 +21,7 @@ export function Fees() {
   const { state } = useApp();
   const t = useTotals();
 
+  const [showFilters, setShowFilters] = useState(false);
   const [q, setQ] = useState("");
   const [cls, setCls] = useState("All");
   const [sec, setSec] = useState("All");
@@ -32,7 +33,7 @@ export function Fees() {
   const [minPending, setMinPending] = useState(0);
 
   const active =
-    (q ? 1 : 0) + (cls !== "All" ? 1 : 0) + (sec !== "All" ? 1 : 0) + (status !== "All" ? 1 : 0) +
+    (cls !== "All" ? 1 : 0) + (sec !== "All" ? 1 : 0) + (status !== "All" ? 1 : 0) +
     (term !== "All" ? 1 : 0) + (method !== "All" ? 1 : 0) + (from ? 1 : 0) + (to ? 1 : 0) + (minPending ? 1 : 0);
 
   function clear() {
@@ -52,7 +53,6 @@ export function Fees() {
     if (method !== "All" && !s.payments.some(p => p.method === method)) return false;
     if (minPending && pending < minPending) return false;
     if (from || to) {
-      // Demo data carries "18 Aug"-style dates; compare on day-of-August for the range.
       const days = s.payments.map(p => parseInt(p.date, 10));
       const lo = from ? new Date(from).getDate() : 0;
       const hi = to ? new Date(to).getDate() : 31;
@@ -66,9 +66,9 @@ export function Fees() {
 
   return (
     <>
-      <PageHeader title="Fees" sub="Track collections and record payments." />
+      <PageHeader title="Fees" sub="Track collections and record payments across the school." />
 
-      <div className="mb-5">
+      <div className="mb-6">
         <StatGrid
           cols={4}
           items={[
@@ -80,90 +80,94 @@ export function Fees() {
         />
       </div>
 
-      <section className="panel p-5 mb-5">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-[17px] m-0">Filter fee records</h2>
-          <button className="btn btn-secondary" onClick={clear} disabled={active === 0}>
-            <X size={15} /> Clear filters{active ? " (" + active + ")" : ""}
-          </button>
-        </div>
-        <div className="grid gap-4" style={{ gridTemplateColumns: "repeat(4, minmax(0,1fr))" }}>
-          <div className="col-span-2">
-            <Field label="Search">
-              <div className="flex items-center gap-2 border border-line px-3 h-11 bg-white">
-                <Search size={16} className="text-muted" />
-                <input value={q} onChange={e => setQ(e.target.value)} placeholder="Student name, admission number or class"
-                  className="flex-1 border-0 bg-transparent text-[14px] outline-none" />
-              </div>
+      {/* Search + filter toggle */}
+      <div className="panel p-3 mb-4 flex flex-wrap items-center gap-3">
+        <SearchInput value={q} onChange={setQ} placeholder="Search by student, admission number or class" className="flex-1 min-w-[240px]" />
+        <button
+          className={"btn " + (showFilters || active ? "btn-accent-soft" : "btn-secondary")}
+          onClick={() => setShowFilters(v => !v)}
+        >
+          <SlidersHorizontal size={15} /> Filters{active ? ` (${active})` : ""}
+        </button>
+        {active > 0 && (
+          <button className="btn btn-ghost" onClick={clear}><X size={15} /> Clear</button>
+        )}
+        <span className="text-[13px] text-muted ml-auto pr-1">
+          <strong className="text-ink">{rows.length}</strong> shown ·
+          <span className="text-warn font-medium"> {inr(shownPending)} pending</span>
+        </span>
+      </div>
+
+      {showFilters && (
+        <section className="panel p-5 mb-4 animate-slide-up">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <Field label="Class">
+              <select className="select" value={cls} onChange={e => setCls(e.target.value)}>
+                {["All", ...CLASS_LIST].map(c => <option key={c}>{c}</option>)}
+              </select>
+            </Field>
+            <Field label="Section">
+              <select className="select" value={sec} onChange={e => setSec(e.target.value)}>
+                {["All", ...SECTIONS].map(c => <option key={c}>{c}</option>)}
+              </select>
+            </Field>
+            <Field label="Payment status">
+              <select className="select" value={status} onChange={e => setStatus(e.target.value as Status)}>
+                {["All", "Paid", "Partly paid", "Pending"].map(c => <option key={c}>{c}</option>)}
+              </select>
+            </Field>
+            <Field label="Term outstanding">
+              <select className="select" value={term} onChange={e => setTerm(e.target.value)}>
+                {["All", ...TERMS].map(c => <option key={c}>{c}</option>)}
+              </select>
+            </Field>
+            <Field label="Payment method used">
+              <select className="select" value={method} onChange={e => setMethod(e.target.value)}>
+                {["All", ...PAYMENT_METHODS].map(c => <option key={c}>{c}</option>)}
+              </select>
+            </Field>
+            <Field label="Pending above">
+              <select className="select" value={String(minPending)} onChange={e => setMinPending(Number(e.target.value))}>
+                {THRESHOLDS.map(v => <option key={v} value={v}>{v === 0 ? "Any amount" : inr(v)}</option>)}
+              </select>
+            </Field>
+            <Field label="Paid from">
+              <input className="input" type="date" value={from} onChange={e => setFrom(e.target.value)} />
+            </Field>
+            <Field label="Paid to">
+              <input className="input" type="date" value={to} onChange={e => setTo(e.target.value)} />
             </Field>
           </div>
-          <Field label="Class">
-            <select className="select" value={cls} onChange={e => setCls(e.target.value)}>
-              {["All", ...CLASS_LIST].map(c => <option key={c}>{c}</option>)}
-            </select>
-          </Field>
-          <Field label="Section">
-            <select className="select" value={sec} onChange={e => setSec(e.target.value)}>
-              {["All", ...SECTIONS].map(c => <option key={c}>{c}</option>)}
-            </select>
-          </Field>
-          <Field label="Payment status">
-            <select className="select" value={status} onChange={e => setStatus(e.target.value as Status)}>
-              {["All", "Paid", "Partly paid", "Pending"].map(c => <option key={c}>{c}</option>)}
-            </select>
-          </Field>
-          <Field label="Fee term outstanding">
-            <select className="select" value={term} onChange={e => setTerm(e.target.value)}>
-              {["All", ...TERMS].map(c => <option key={c}>{c}</option>)}
-            </select>
-          </Field>
-          <Field label="Payment method used">
-            <select className="select" value={method} onChange={e => setMethod(e.target.value)}>
-              {["All", ...PAYMENT_METHODS].map(c => <option key={c}>{c}</option>)}
-            </select>
-          </Field>
-          <Field label="Pending above">
-            <select className="select" value={String(minPending)} onChange={e => setMinPending(Number(e.target.value))}>
-              {THRESHOLDS.map(v => <option key={v} value={v}>{v === 0 ? "Any amount" : inr(v)}</option>)}
-            </select>
-          </Field>
-          <Field label="Paid between — from">
-            <input className="input" type="date" value={from} onChange={e => setFrom(e.target.value)} />
-          </Field>
-          <Field label="to">
-            <input className="input" type="date" value={to} onChange={e => setTo(e.target.value)} />
-          </Field>
-        </div>
-        <div className="mt-4 pt-4 border-t border-line flex items-center gap-5 text-[13.5px]">
-          <span><strong>{rows.length}</strong> of {state.students.length} students shown</span>
-          <span className="text-warn">Pending in this view: <strong>{inr(shownPending)}</strong></span>
-        </div>
-      </section>
+        </section>
+      )}
 
-      <div className="panel">
-        <DataTable head={["Student", "Class", "Total fee", "Paid", "Pending", "Last payment", "Status", "Action"]}>
+      <div className="panel overflow-hidden">
+        <DataTable
+          head={["Student", "Class", { label: "Total fee", align: "right" }, { label: "Paid", align: "right" }, { label: "Pending", align: "right" }, "Last payment", { label: "Status", align: "center" }, { label: "", align: "right" }]}
+          minWidth={880}
+        >
           {rows.map(s => {
             const pending = s.feeTotal - s.feePaid;
             const st = statusOf(s.feeTotal, s.feePaid);
             return (
-              <tr key={s.id} className="border-b border-line hover:bg-accent-100">
-                <td className="td font-semibold text-[14.5px]">{s.name}</td>
+              <Row key={s.id}>
+                <td className="td font-semibold text-ink">{s.name}</td>
                 <td className="td">{s.cls}</td>
-                <td className="td">{inr(s.feeTotal)}</td>
-                <td className="td text-ok font-semibold">{inr(s.feePaid)}</td>
-                <td className="td font-semibold">{pending > 0 ? inr(pending) : "—"}</td>
+                <td className="td text-right tabular-nums">{inr(s.feeTotal)}</td>
+                <td className="td text-right text-ok font-semibold tabular-nums">{inr(s.feePaid)}</td>
+                <td className="td text-right font-semibold tabular-nums" style={{ color: pending > 0 ? "#b45309" : undefined }}>{pending > 0 ? inr(pending) : "—"}</td>
                 <td className="td text-muted">{s.payments.length ? s.payments[s.payments.length - 1].date : "—"}</td>
-                <td className="td">
-                  <Badge tone={st === "Paid" ? "ok" : st === "Pending" ? "bad" : "warn"}>{st}</Badge>
+                <td className="td text-center">
+                  <Badge tone={st === "Paid" ? "ok" : st === "Pending" ? "bad" : "warn"} dot>{st}</Badge>
                 </td>
-                <td className="td"><Link to={`/fees/${s.id}`} className="text-[13.5px] font-semibold underline">View / Collect</Link></td>
-              </tr>
+                <td className="td text-right"><Link to={`/fees/${s.id}`} className="link">Collect</Link></td>
+              </Row>
             );
           })}
         </DataTable>
         {rows.length === 0 && (
-          <EmptyState title="No fee records found" body="No student matches these filters."
-            action={<button className="btn btn-secondary" onClick={clear}>Clear Filters</button>} />
+          <EmptyState icon={Wallet} title="No fee records found" body="No student matches these filters. Try clearing them to see the full roll."
+            action={<button className="btn btn-secondary" onClick={clear}>Clear filters</button>} />
         )}
       </div>
     </>
@@ -198,33 +202,26 @@ export function FeeStudent() {
   return (
     <>
       <BackLink to="/fees">Back to Fees</BackLink>
-      <div className="flex items-end justify-between gap-6 flex-wrap">
-        <div>
-          <h1 className="text-[30px] mb-1.5">{s.name}</h1>
-          <p className="m-0 text-[14px] text-muted">Class {s.cls} · {s.adm} · Parent: {s.father} · {s.phone}</p>
-        </div>
-        <div className="flex gap-2.5 flex-wrap">
-          <a className="btn btn-secondary text-ink no-underline hover:no-underline" href={phoneHref(s.phone)}>
-            <Phone size={16} /> Call Parent
-          </a>
-          <a
-            className="btn btn-wa text-white no-underline hover:no-underline"
-            href={waHref(s.whatsapp, waText)}
-            target="_blank"
-            rel="noreferrer"
-            onClick={() => toast("WhatsApp reminder opened", inr(pending) + " reminder to " + s.father)}
-          >
-            <MessageCircle size={16} /> Notify on WhatsApp
-          </a>
-          <button className="btn btn-secondary" onClick={() => toast("Reminder sent", "SMS reminder queued for " + s.phone)}>
-            Send SMS Reminder
-          </button>
-          <button className="btn btn-primary" onClick={() => setOpen(true)}>Record Payment</button>
+
+      <div className="card p-5 sm:p-6 mb-6">
+        <div className="flex flex-wrap items-start justify-between gap-5">
+          <div className="min-w-0">
+            <h1 className="text-h1 font-display font-bold text-ink truncate">{s.name}</h1>
+            <p className="mt-1 text-[13px] text-muted">Class {s.cls} · {s.adm} · {s.father} · {s.phone}</p>
+          </div>
+          <div className="flex gap-2.5 flex-wrap">
+            <a className="btn btn-secondary" href={phoneHref(s.phone)}><Phone size={16} /> Call</a>
+            <a className="btn btn-wa" href={waHref(s.whatsapp, waText)} target="_blank" rel="noreferrer"
+              onClick={() => toast("WhatsApp reminder opened", inr(pending) + " reminder to " + s.father)}>
+              <MessageCircle size={16} /> Notify
+            </a>
+            <button className="btn btn-secondary" onClick={() => toast("Reminder sent", "SMS reminder queued for " + s.phone)}>Send SMS</button>
+            <button className="btn btn-primary" onClick={() => setOpen(true)}><Receipt size={15} /> Record Payment</button>
+          </div>
         </div>
       </div>
-      <div className="rule my-5" />
 
-      <div className="mb-5">
+      <div className="mb-6">
         <StatGrid
           cols={4}
           items={[
@@ -236,48 +233,48 @@ export function FeeStudent() {
         />
       </div>
 
-      <div className="grid gap-5" style={{ gridTemplateColumns: "1fr 1fr" }}>
-        <section className="panel">
-          <div className="sectionhead"><h2 className="text-[18px] m-0">Term-wise fee</h2></div>
-          <DataTable head={["Term", "Amount", "Paid", "Pending", "Due date"]}>
+      <div className="grid gap-6 lg:grid-cols-2 items-start">
+        <SectionCard title="Term-wise fee" pad={false}>
+          <DataTable head={["Term", { label: "Amount", align: "right" }, { label: "Paid", align: "right" }, { label: "Pending", align: "right" }, "Due date"]}>
             {s.feeTerms.map(ft => (
-              <tr key={ft.term} className="border-b border-line">
-                <td className="td font-semibold">{ft.term}</td>
-                <td className="td">{inr(ft.amount)}</td>
-                <td className="td text-ok">{inr(ft.paid)}</td>
-                <td className="td font-semibold">{ft.amount - ft.paid > 0 ? inr(ft.amount - ft.paid) : "—"}</td>
+              <Row key={ft.term}>
+                <td className="td font-semibold text-ink">{ft.term}</td>
+                <td className="td text-right tabular-nums">{inr(ft.amount)}</td>
+                <td className="td text-right text-ok tabular-nums">{inr(ft.paid)}</td>
+                <td className="td text-right font-semibold tabular-nums">{ft.amount - ft.paid > 0 ? inr(ft.amount - ft.paid) : "—"}</td>
                 <td className="td text-muted">{ft.due}</td>
-              </tr>
+              </Row>
             ))}
           </DataTable>
-        </section>
+        </SectionCard>
 
-        <section className="panel">
-          <div className="sectionhead">
-            <h2 className="text-[18px] m-0">Payment history</h2>
-            <button className="link" onClick={() => toast("Receipt opened", "Prototype — no PDF generated")}>View Receipt</button>
-          </div>
+        <SectionCard
+          title="Payment history"
+          pad={false}
+          action={<button className="link" onClick={() => toast("Receipt opened", "Prototype — no PDF generated")}>View receipt</button>}
+        >
           {s.payments.length === 0
-            ? <EmptyState title="No payments yet" body="Record the first payment to start the history." />
+            ? <EmptyState icon={Receipt} title="No payments yet" body="Record the first payment to start the history." />
             : (
-              <DataTable head={["Date", "Amount", "Term", "Method", "Receipt No."]}>
+              <DataTable head={["Date", { label: "Amount", align: "right" }, "Term", "Method", "Receipt No."]}>
                 {s.payments.map(p => (
-                  <tr key={p.receipt} className="border-b border-line">
+                  <Row key={p.receipt}>
                     <td className="td">{p.date}</td>
-                    <td className="td font-semibold">{inr(p.amount)}</td>
+                    <td className="td text-right font-semibold tabular-nums">{inr(p.amount)}</td>
                     <td className="td">{p.term}</td>
                     <td className="td">{p.method}</td>
                     <td className="td text-muted">{p.receipt}</td>
-                  </tr>
+                  </Row>
                 ))}
               </DataTable>
             )}
-        </section>
+        </SectionCard>
       </div>
 
       {open && (
         <Modal
           title="Record Payment"
+          sub={`${s.name} · Class ${s.cls}`}
           onClose={() => setOpen(false)}
           actions={
             <>
@@ -286,17 +283,20 @@ export function FeeStudent() {
             </>
           }
         >
-          <Field label="Student">
-            <div className="input flex items-center bg-ground">{s.name} · {s.cls}</div>
-          </Field>
+          {pending > 0 && (
+            <div className="flex items-center justify-between rounded-md bg-warn-bg border border-warn-border px-3.5 py-2.5">
+              <span className="text-[13px] text-warn font-medium">Outstanding</span>
+              <span className="text-[15px] font-bold text-warn tabular-nums">{inr(pending)}</span>
+            </div>
+          )}
           <Field label="Fee term">
             <select className="select" value={term} onChange={e => setTerm(e.target.value)}>
               {TERMS.map(t => <option key={t}>{t}</option>)}
             </select>
           </Field>
           <div className="grid grid-cols-2 gap-4">
-            <Field label="Amount (₹)">
-              <input className="input" value={amount} onChange={e => setAmount(e.target.value.replace(/[^0-9]/g, ""))} placeholder="5000" />
+            <Field label="Amount (₹)" required>
+              <input className="input" value={amount} onChange={e => setAmount(e.target.value.replace(/[^0-9]/g, ""))} placeholder="5000" inputMode="numeric" />
             </Field>
             <Field label="Payment method">
               <select className="select" value={method} onChange={e => setMethod(e.target.value)}>
@@ -305,7 +305,7 @@ export function FeeStudent() {
             </Field>
           </div>
           <Field label="Date">
-            <div className="input flex items-center bg-ground">18 August 2026</div>
+            <div className="input flex items-center bg-subtle text-muted">18 August 2026</div>
           </Field>
         </Modal>
       )}

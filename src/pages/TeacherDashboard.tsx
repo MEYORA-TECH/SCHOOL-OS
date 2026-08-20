@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { AlertTriangle, Calendar, Check, ClipboardCheck, PieChart } from "lucide-react";
 import { DAYS, TODAY } from "../data";
 import { useApp } from "../store";
-import { Bar, PageHeader, StatGrid } from "../ui";
+import { Badge, Bar, SectionCard, StatGrid } from "../ui";
 
 export default function TeacherDashboard() {
   const { state, dispatch, me } = useApp();
@@ -18,105 +18,107 @@ export default function TeacherDashboard() {
 
   return (
     <>
-      <div className="flex items-end justify-between gap-6 mb-2">
+      <div className="flex flex-wrap items-start justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-[30px] mb-1.5">Good morning, {me.name.split(" ")[0]}</h1>
-          <p className="m-0 text-[14.5px] text-muted">
+          <h1 className="text-display font-display font-bold text-ink">Good morning, {me.name.split(" ")[0]}</h1>
+          <p className="mt-1 text-[14px] text-muted">
             {me.subject} · {me.classes.join(", ")}
             {me.classTeacherOf && " · class teacher of " + me.classTeacherOf}
           </p>
         </div>
-        <div className="text-right text-[13px] text-muted">Tuesday, 18 August 2026</div>
+        <div className="text-[13px] text-muted bg-surface border border-line rounded-md px-3.5 py-2 shadow-xs">Tuesday, 18 August 2026</div>
       </div>
-      <div className="rule mt-4 mb-6" />
 
-      <StatGrid
-        cols={4}
-        items={[
-          { label: "My classes", value: me.classes.length, sub: me.periodsPerWeek + " periods a week" },
-          { label: "Logged today", value: today.length + " periods", sub: today.length ? "Worklog up to date" : "Not written yet", color: today.length ? "#15803d" : "#b45309" },
-          { label: "Attendance pending", value: pendingClasses.length, sub: pendingClasses.length ? pendingClasses.join(", ") : "All classes marked", color: pendingClasses.length ? "#b45309" : "#15803d" },
-          { label: "Open tasks", value: openTasks.length, sub: "from the principal", color: openTasks.length ? "#b45309" : "#15803d" }
-        ]}
-      />
+      <div className="mb-6">
+        <StatGrid
+          cols={4}
+          items={[
+            { label: "My classes", value: me.classes.length, sub: me.periodsPerWeek + " periods a week" },
+            { label: "Logged today", value: today.length + " periods", sub: today.length ? "Worklog up to date" : "Not written yet", color: today.length ? "#15803d" : "#b45309" },
+            { label: "Attendance pending", value: pendingClasses.length, sub: pendingClasses.length ? pendingClasses.join(", ") : "All classes marked", color: pendingClasses.length ? "#b45309" : "#15803d" },
+            { label: "Open tasks", value: openTasks.length, sub: "from the principal", color: openTasks.length ? "#b45309" : "#15803d" }
+          ]}
+        />
+      </div>
 
-      <div className="grid gap-5 mt-5" style={{ gridTemplateColumns: "1.35fr 1fr" }}>
-        <section className="panel">
-          <div className="sectionhead">
-            <h2 className="text-[19px] m-0">Today's periods</h2>
-            <Link to="/worklog" className="text-[13px] font-semibold">Write worklog</Link>
-          </div>
+      <div className="grid gap-6 mb-6 items-start lg:grid-cols-[1.35fr_1fr]">
+        <SectionCard title="Today's periods" pad={false} action={<Link to="/worklog" className="link">Write worklog</Link>}>
           <table className="w-full border-collapse">
             <tbody>
               {todayRow.slots.map((slot, i) => {
                 const logged = today.find(w => w.period === i + 1);
                 return (
-                  <tr key={i} className="border-b border-line">
+                  <tr key={i} className="border-b border-line last:border-0">
                     <td className="td w-[90px] text-muted">Period {i + 1}</td>
-                    <td className="td font-semibold">{slot || <span className="text-muted font-normal">Free period</span>}</td>
+                    <td className="td font-semibold text-ink">{slot || <span className="text-faint font-normal">Free period</span>}</td>
                     <td className="td text-right">
                       {!slot ? null : logged
                         ? <span className="inline-flex items-center gap-1.5 text-[13px] text-ok font-semibold"><Check size={14} /> Logged</span>
-                        : <Link to="/worklog" className="text-[13px] font-semibold">Add log</Link>}
+                        : <Link to="/worklog" className="link">Add log</Link>}
                     </td>
                   </tr>
                 );
               })}
             </tbody>
           </table>
-        </section>
+        </SectionCard>
 
-        <section className="panel p-5">
-          <h2 className="text-[19px] m-0 mb-4">Syllabus progress</h2>
+        <SectionCard title="Syllabus progress">
           <div className="flex flex-col gap-3.5">
             {me.classes.map(c => {
               const last = myLog.filter(w => w.cls === c).sort((a, b) => b.syllabusPct - a.syllabusPct)[0];
               const pct = last ? last.syllabusPct : 45;
               return (
-                <div key={c} className="grid items-center gap-3.5" style={{ gridTemplateColumns: "56px 1fr 33px" }}>
-                  <span className="text-[14px] font-semibold">{c}</span>
-                  <Bar pct={pct} />
-                  <span className="text-[13.5px] text-right text-muted">{pct}%</span>
+                <div key={c} className="grid items-center gap-3.5" style={{ gridTemplateColumns: "56px 1fr 36px" }}>
+                  <span className="text-[13.5px] font-semibold text-ink">{c}</span>
+                  <Bar pct={pct} color={pct >= 70 ? "#16a34a" : "#2563eb"} />
+                  <span className="text-[13px] text-right text-muted tabular-nums">{pct}%</span>
                 </div>
               );
             })}
           </div>
-          <div className="h-px bg-line my-5" />
+          <div className="rule my-5" />
           <div className="kicker mb-3">Quick actions</div>
           <div className="grid gap-2.5">
-            <Link to="/attendance" className="btn btn-secondary w-full text-ink no-underline hover:no-underline"><Calendar size={18} className="text-accent" /> Mark Attendance</Link>
-            <Link to="/worklog" className="btn btn-secondary w-full text-ink no-underline hover:no-underline"><ClipboardCheck size={18} className="text-accent" /> Write Today's Worklog</Link>
-            <Link to="/exams" className="btn btn-secondary w-full text-ink no-underline hover:no-underline"><PieChart size={18} className="text-accent" /> Enter Marks</Link>
+            {[
+              { to: "/attendance", label: "Mark Attendance", Icon: Calendar },
+              { to: "/worklog", label: "Write Today's Worklog", Icon: ClipboardCheck },
+              { to: "/exams", label: "Enter Marks", Icon: PieChart }
+            ].map(({ to, label, Icon }) => (
+              <Link key={to} to={to}
+                className="flex items-center gap-2.5 rounded-md border border-line bg-surface px-3 h-[42px] text-[13.5px] font-medium text-body hover:border-accent-200 hover:bg-accent-50 hover:text-accent-700 transition-colors">
+                <Icon size={17} className="text-accent shrink-0" /> {label}
+              </Link>
+            ))}
           </div>
-        </section>
+        </SectionCard>
       </div>
 
-      <section className="panel mt-5">
-        <div className="sectionhead">
-          <div className="flex items-center gap-2.5">
-            <AlertTriangle size={18} className="text-warn" />
-            <h2 className="text-[19px] m-0">Tasks from the principal</h2>
-          </div>
-          <span className="text-[13px] text-muted">{openTasks.length} open</span>
-        </div>
-        {myTasks.length === 0 && <div className="p-6 text-[14px] text-muted">Nothing assigned right now.</div>}
-        {myTasks.map(t => (
-          <div key={t.id} className="flex items-center gap-4 px-5 py-3.5 border-b border-line">
+      <SectionCard
+        title="Tasks from the principal"
+        icon={AlertTriangle}
+        pad={false}
+        action={<Badge tone={openTasks.length ? "warn" : "ok"}>{openTasks.length} open</Badge>}
+      >
+        {myTasks.length === 0 && <div className="px-5 py-8 text-[13.5px] text-muted">Nothing assigned right now.</div>}
+        {myTasks.map((t, i) => (
+          <div key={t.id} className={"flex items-center gap-4 px-5 py-3.5 " + (i < myTasks.length - 1 ? "border-b border-line" : "")}>
             <button
-              className={"w-6 h-6 border-2 grid place-items-center cursor-pointer " + (t.status === "Done" ? "bg-ok border-ok text-white" : "bg-white border-line")}
+              className={"h-6 w-6 rounded-md border-2 grid place-items-center cursor-pointer transition-colors shrink-0 "
+                + (t.status === "Done" ? "bg-ok-strong border-ok-strong text-white" : "bg-surface border-line-strong hover:border-accent")}
               onClick={() => dispatch({ type: "toggleTask", id: t.id })}
               aria-label={t.status === "Done" ? "Mark open" : "Mark done"}
             >
               {t.status === "Done" && <Check size={14} />}
             </button>
-            <div className="flex-1">
-              <div className={"text-[14.5px] " + (t.status === "Done" ? "line-through text-muted" : "font-semibold")}>{t.title}</div>
-              <div className="text-[12.5px] text-muted">{t.assignedBy} · due {t.due}</div>
+            <div className="flex-1 min-w-0">
+              <div className={"text-[14px] " + (t.status === "Done" ? "line-through text-muted" : "font-semibold text-ink")}>{t.title}</div>
+              <div className="text-[12px] text-muted">{t.assignedBy} · due {t.due}</div>
             </div>
-            <span className={"text-[12.5px] font-semibold " + (t.status === "Done" ? "text-ok" : "text-warn")}>{t.status}</span>
+            <Badge tone={t.status === "Done" ? "ok" : "warn"} dot>{t.status}</Badge>
           </div>
         ))}
-      </section>
+      </SectionCard>
     </>
   );
 }

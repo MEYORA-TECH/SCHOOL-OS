@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { Check, Plus, X } from "lucide-react";
 import { CLASS_LIST, SUBJECTS, TODAY, WorklogEntry } from "../data";
 import { useApp } from "../store";
-import { Avatar, Badge, Bar, DataTable, EmptyState, Field, Modal, PageHeader, StatGrid } from "../ui";
+import { Avatar, Badge, Bar, DataTable, EmptyState, Field, Modal, PageHeader, Row, SectionCard, StatGrid } from "../ui";
 
 export default function Worklog() {
   const { state, dispatch, toast, me } = useApp();
@@ -57,7 +57,7 @@ export default function Worklog() {
 
       {!isTeacher && (
         <>
-          <div className="mb-5">
+          <div className="mb-6">
             <StatGrid
               cols={4}
               items={[
@@ -70,44 +70,40 @@ export default function Worklog() {
           </div>
 
           {missing.length > 0 && (
-            <section className="panel mb-5">
-              <div className="sectionhead">
-                <h2 className="text-[18px] m-0">Not written today</h2>
-                <span className="text-[13px] text-muted">{missing.length} teachers</span>
-              </div>
-              <div className="p-5 flex flex-wrap gap-3">
+            <SectionCard
+              title="Not written today"
+              className="mb-6"
+              action={<Badge tone="warn">{missing.length} teachers</Badge>}
+            >
+              <div className="flex flex-wrap gap-2.5">
                 {missing.map(t => (
-                  <div key={t.id} className="flex items-center gap-3 border border-line px-3 min-h-[33px]">
-                    <Avatar name={t.name} size={28} />
-                    <span className="text-[14px] font-semibold">{t.name}</span>
-                    <span className="text-[12.5px] text-muted">{t.subject}</span>
-                    <button className="link" onClick={() => toast("Reminder sent", t.name + " asked to submit today's worklog")}>Remind</button>
+                  <div key={t.id} className="flex items-center gap-2.5 rounded-md border border-line px-3 py-1.5 bg-surface">
+                    <Avatar name={t.name} size={26} />
+                    <span className="text-[13.5px] font-semibold text-ink">{t.name}</span>
+                    <span className="text-[12px] text-muted">{t.subject}</span>
+                    <button className="link ml-1" onClick={() => toast("Reminder sent", t.name + " asked to submit today's worklog")}>Remind</button>
                   </div>
                 ))}
               </div>
-            </section>
+            </SectionCard>
           )}
 
-          <div className="flex gap-4 items-end mb-4">
-            <Field label="Teacher">
-              <select className="select w-[240px]" value={teacherFilter} onChange={e => setTeacherFilter(e.target.value)}>
-                <option value="All">All teachers</option>
-                {state.teachers.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
-              </select>
-            </Field>
-            <Field label="Day">
-              <select className="select w-[180px]" value={dayFilter} onChange={e => setDayFilter(e.target.value)}>
-                <option value="All">All days</option>
-                {days.map(d => <option key={d}>{d}</option>)}
-              </select>
-            </Field>
-            <span className="text-[13.5px] text-muted pb-3">{entries.length} entries</span>
+          <div className="panel p-3 mb-4 flex flex-wrap items-center gap-3">
+            <select className="select w-auto min-w-[200px]" value={teacherFilter} onChange={e => setTeacherFilter(e.target.value)} aria-label="Filter by teacher">
+              <option value="All">All teachers</option>
+              {state.teachers.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+            </select>
+            <select className="select w-auto min-w-[160px]" value={dayFilter} onChange={e => setDayFilter(e.target.value)} aria-label="Filter by day">
+              <option value="All">All days</option>
+              {days.map(d => <option key={d}>{d}</option>)}
+            </select>
+            <span className="text-[13px] text-muted ml-auto pr-1"><strong className="text-ink">{entries.length}</strong> entries</span>
           </div>
         </>
       )}
 
       {isTeacher && (
-        <div className="mb-5">
+        <div className="mb-6">
           <StatGrid
             cols={3}
             items={[
@@ -119,31 +115,32 @@ export default function Worklog() {
         </div>
       )}
 
-      <div className="panel">
-        <DataTable head={isTeacher
-          ? ["Date", "Period", "Class", "Subject", "Topic covered", "Attendance", "Syllabus"]
-          : ["Date", "Teacher", "Period", "Class", "Subject", "Topic covered", "Attendance", "Syllabus"]}>
+      <div className="panel overflow-hidden">
+        <DataTable
+          head={isTeacher
+            ? ["Date", "Period", "Class", "Subject", "Topic covered", { label: "Attendance", align: "center" }, "Syllabus"]
+            : ["Date", "Teacher", "Period", "Class", "Subject", "Topic covered", { label: "Attendance", align: "center" }, "Syllabus"]}
+          minWidth={isTeacher ? 820 : 940}
+        >
           {entries.map(w => (
-            <tr key={w.id} className="border-b border-line align-top">
+            <Row key={w.id} className="align-top">
               <td className="td text-muted whitespace-nowrap">{w.date}</td>
-              {!isTeacher && <td className="td font-semibold whitespace-nowrap">{nameOf(w.teacherId)}</td>}
+              {!isTeacher && <td className="td font-semibold text-ink whitespace-nowrap">{nameOf(w.teacherId)}</td>}
               <td className="td">P{w.period}</td>
-              <td className="td font-semibold">{w.cls}</td>
+              <td className="td font-semibold text-ink">{w.cls}</td>
               <td className="td">{w.subject}</td>
               <td className="td">
-                <div className="font-semibold text-[14px]">{w.topic}</div>
-                {w.remarks && <div className="text-[12.5px] text-muted">{w.remarks}</div>}
+                <div className="font-medium text-ink">{w.topic}</div>
+                {w.remarks && <div className="text-[12px] text-muted mt-0.5">{w.remarks}</div>}
               </td>
-              <td className="td">
-                {w.attendanceMarked
-                  ? <Badge tone="ok">Marked</Badge>
-                  : <Badge tone="warn">Not marked</Badge>}
+              <td className="td text-center">
+                {w.attendanceMarked ? <Badge tone="ok">Marked</Badge> : <Badge tone="warn">Not marked</Badge>}
               </td>
               <td className="td w-[130px]">
                 <Bar pct={w.syllabusPct} />
-                <div className="text-[12.5px] text-muted mt-1">{w.syllabusPct}%</div>
+                <div className="text-[12px] text-muted mt-1 tabular-nums">{w.syllabusPct}%</div>
               </td>
-            </tr>
+            </Row>
           ))}
         </DataTable>
         {entries.length === 0 && (
@@ -157,7 +154,8 @@ export default function Worklog() {
       {open && (
         <Modal
           title="Today's worklog entry"
-          width={560}
+          sub="Record what you taught this period."
+          width={580}
           onClose={() => setOpen(false)}
           actions={
             <>
@@ -181,25 +179,25 @@ export default function Worklog() {
               <input className="input" value={form.subject} onChange={e => setForm({ ...form, subject: e.target.value })} />
             </Field>
           </div>
-          <Field label="Topic covered">
+          <Field label="Topic covered" required>
             <input className="input" value={form.topic} onChange={e => setForm({ ...form, topic: e.target.value })}
               placeholder="e.g. Quadratic equations — nature of roots" />
           </Field>
           <Field label="Remarks on the class (optional)">
-            <textarea className="w-full border border-line bg-white p-3 text-[14.5px]" rows={3}
+            <textarea className="textarea" rows={3}
               value={form.remarks} onChange={e => setForm({ ...form, remarks: e.target.value })} />
           </Field>
           <div className="grid grid-cols-2 gap-4 items-end">
-            <Field label="Syllabus completed for this class (%)">
-              <input className="input" value={form.syllabusPct}
+            <Field label="Syllabus completed (%)">
+              <input className="input" value={form.syllabusPct} inputMode="numeric"
                 onChange={e => setForm({ ...form, syllabusPct: e.target.value.replace(/[^0-9]/g, "") })} />
             </Field>
             <button
-              className={"btn " + (form.attendanceMarked ? "btn-accent-soft" : "btn-secondary")}
+              className={"btn h-[38px] " + (form.attendanceMarked ? "btn-accent-soft" : "btn-secondary")}
               onClick={() => setForm({ ...form, attendanceMarked: !form.attendanceMarked })}
             >
               {form.attendanceMarked ? <Check size={16} /> : <X size={16} />}
-              Attendance marked for this period
+              Attendance marked
             </button>
           </div>
         </Modal>

@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { Printer } from "lucide-react";
+import { Printer, ArrowRight } from "lucide-react";
 import { CLASS_LIST, SCHOOL_NAME, SUBJECTS, grade } from "../data";
 import { useApp } from "../store";
-import { BackLink, Badge, DataTable, EmptyState, PageHeader } from "../ui";
+import { BackLink, Badge, DataTable, EmptyState, PageHeader, Row } from "../ui";
 
 const EXAMS = [
   { name: "Term 1 Examination", classes: "Classes 6–10", status: "Completed" as const, dates: "05 Aug – 12 Aug 2026" },
@@ -23,15 +23,19 @@ export function Exams() {
           ? <button className="btn btn-primary" onClick={() => toast("Exam created", "Prototype — schedule not persisted")}>Create Exam</button>
           : undefined}
       />
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {EXAMS.map(e => (
           <Link key={e.name} to="/exams/results"
-            className="panel p-5 flex flex-col gap-2 text-ink no-underline hover:no-underline hover:border-accent">
-            <Badge tone={e.status === "Completed" ? "ok" : "accent"}>{e.status}</Badge>
-            <span className="font-extrabold text-[19px] mt-1">{e.name}</span>
-            <span className="text-[14px] text-muted">{e.classes}</span>
-            <span className="text-[13px] text-muted">{e.dates}</span>
-            <span className="text-[13.5px] text-accent font-bold mt-1.5">Open results →</span>
+            className="card p-5 flex flex-col gap-2.5 hover:shadow-md hover:border-line-strong transition-all group">
+            <div className="flex items-center justify-between">
+              <Badge tone={e.status === "Completed" ? "ok" : "accent"} dot>{e.status}</Badge>
+            </div>
+            <span className="font-display font-bold text-h2 text-ink mt-1">{e.name}</span>
+            <span className="text-[13.5px] text-body">{e.classes}</span>
+            <span className="text-[12.5px] text-muted">{e.dates}</span>
+            <span className="inline-flex items-center gap-1 text-[13px] text-accent font-semibold mt-1.5 group-hover:gap-2 transition-all">
+              Open results <ArrowRight size={14} />
+            </span>
           </Link>
         ))}
       </div>
@@ -61,47 +65,46 @@ export function ExamResults() {
   return (
     <>
       <BackLink to="/exams">Back to Exams</BackLink>
-      <div className="flex items-end justify-between gap-6 flex-wrap">
+      <div className="flex flex-wrap items-end justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-[30px] mb-1.5">Term 1 Examination</h1>
-          <p className="m-0 text-[14.5px] text-muted">Enter marks out of 100. Totals and grades update as you type.</p>
+          <h1 className="text-h1 font-display font-bold text-ink">Term 1 Examination</h1>
+          <p className="mt-1 text-[14px] text-muted">Enter marks out of 100. Totals and grades update as you type.</p>
         </div>
         <div className="flex gap-3 items-center">
-          <label className="flex items-center gap-2 text-[13px] text-muted">
-            Class
-            <select className="select w-[120px]" value={cls} onChange={e => setCls(e.target.value)}>
-              {options.map(c => <option key={c}>{c}</option>)}
-            </select>
-          </label>
-          <button className="btn btn-primary" onClick={save} disabled={Object.keys(edits).length === 0}>Save Marks</button>
+          <select className="select w-auto min-w-[120px]" value={cls} onChange={e => setCls(e.target.value)} aria-label="Class">
+            {options.map(c => <option key={c}>{c}</option>)}
+          </select>
+          <button className="btn btn-primary" onClick={save} disabled={Object.keys(edits).length === 0}>
+            Save Marks{Object.keys(edits).length ? ` (${Object.keys(edits).length})` : ""}
+          </button>
         </div>
       </div>
-      <div className="rule my-5" />
 
-      <div className="panel">
-        <DataTable head={["Student", ...SUBJECTS, "Total", "Average", "Grade", "Report card"]}>
+      <div className="panel overflow-hidden">
+        <DataTable head={["Student", ...SUBJECTS, { label: "Total", align: "right" }, { label: "Avg", align: "right" }, { label: "Grade", align: "center" }, { label: "", align: "right" }]} minWidth={900}>
           {roll.map(s => {
             const vals = SUBJECTS.map(sub => edits[s.id]?.[sub] ?? s.marks[sub] ?? 0);
             const total = vals.reduce((a, b) => a + b, 0);
             const avg = Math.round(total / SUBJECTS.length);
             return (
-              <tr key={s.id} className="border-b border-line">
-                <td className="td font-semibold text-[14.5px]">{s.name}</td>
+              <Row key={s.id}>
+                <td className="td font-semibold text-ink whitespace-nowrap">{s.name}</td>
                 {SUBJECTS.map((sub, i) => (
-                  <td key={sub} className="px-3 py-2">
+                  <td key={sub} className="px-2 py-2">
                     <input
-                      className="w-[58px] h-11 border border-line bg-white text-[14.5px] text-center"
+                      className="w-[56px] h-9 rounded-md border border-line bg-surface text-[14px] text-center text-ink tabular-nums transition-all hover:border-line-strong focus:border-accent-400 focus:shadow-focus"
                       value={String(vals[i])}
                       onChange={e => setMark(s.id, sub, e.target.value)}
+                      inputMode="numeric"
                       aria-label={sub + " marks for " + s.name}
                     />
                   </td>
                 ))}
-                <td className="td font-semibold">{total}</td>
-                <td className="td">{avg}%</td>
-                <td className="td font-bold" style={{ color: avg >= 80 ? "#15803d" : avg >= 60 ? "#b45309" : "#b91c1c" }}>{grade(avg)}</td>
-                <td className="td"><Link to={`/exams/report/${s.id}`} className="text-[13.5px] font-semibold underline">Preview</Link></td>
-              </tr>
+                <td className="td text-right font-semibold tabular-nums">{total}</td>
+                <td className="td text-right tabular-nums">{avg}%</td>
+                <td className="td text-center font-bold" style={{ color: avg >= 80 ? "#15803d" : avg >= 60 ? "#b45309" : "#be123c" }}>{grade(avg)}</td>
+                <td className="td text-right"><Link to={`/exams/report/${s.id}`} className="link">Report</Link></td>
+              </Row>
             );
           })}
         </DataTable>
@@ -130,64 +133,64 @@ export function ReportCard() {
         </button>
       </div>
 
-      <div className="panel max-w-[840px] mx-auto px-12 py-11">
-        <div className="flex items-center gap-4 pb-5 border-b-2 border-divider">
-          <span className="w-[52px] h-[52px] bg-accent text-white grid place-items-center font-extrabold text-[22px]">S</span>
+      <div className="card max-w-[840px] mx-auto px-8 sm:px-12 py-10 sm:py-11">
+        <div className="flex items-center gap-4 pb-5 border-b-2 border-line-strong">
+          <span className="h-13 w-13 rounded-xl bg-accent text-white grid place-items-center font-display font-bold text-[22px]">S</span>
           <div>
-            <div className="font-extrabold text-[22px]">{SCHOOL_NAME}</div>
+            <div className="font-display font-bold text-h2 text-ink">{SCHOOL_NAME}</div>
             <div className="text-[13px] text-muted">Academic Year 2026–27 · Term 1 Examination Report Card</div>
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-[18px] py-[22px] border-b border-line">
+        <div className="grid grid-cols-3 gap-4 py-5 border-b border-line">
           {[["Student", s.name], ["Class", s.cls], ["Roll / Admission No.", s.adm]].map(([k, v]) => (
             <div key={k}>
-              <div className="kicker">{k}</div>
-              <div className="text-[16px] font-bold">{v}</div>
+              <div className="kicker mb-1">{k}</div>
+              <div className="text-[15px] font-bold text-ink">{v}</div>
             </div>
           ))}
         </div>
 
-        <table className="w-full border-collapse my-[22px]">
+        <table className="w-full border-collapse my-5">
           <thead>
-            <tr className="border-b-2 border-divider">
-              <th className="th px-0">Subject</th>
-              <th className="th px-0 text-right">Marks</th>
-              <th className="th px-0 text-right">Grade</th>
+            <tr className="border-b border-line">
+              <th className="th px-0 bg-transparent">Subject</th>
+              <th className="th px-0 bg-transparent text-right">Marks</th>
+              <th className="th px-0 bg-transparent text-right">Grade</th>
             </tr>
           </thead>
           <tbody>
             {rows.map(r => (
               <tr key={r.sub} className="border-b border-line">
-                <td className="py-3 text-[14.5px]">{r.sub}</td>
-                <td className="py-3 text-[14.5px] text-right font-semibold">{r.score} / 100</td>
-                <td className="py-3 text-[14.5px] text-right">{grade(r.score)}</td>
+                <td className="py-3 text-[14px] text-body">{r.sub}</td>
+                <td className="py-3 text-[14px] text-right font-semibold text-ink tabular-nums">{r.score} / 100</td>
+                <td className="py-3 text-[14px] text-right text-body">{grade(r.score)}</td>
               </tr>
             ))}
           </tbody>
         </table>
 
-        <div className="grid grid-cols-4 gap-[18px] py-[18px] border-t-2 border-divider border-b border-line">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 py-5 border-t-2 border-line-strong border-b border-line">
           {[
             ["Total", total + " / 500"], ["Average", avg + "%"],
             ["Attendance", s.attendance + "%"], ["Overall grade", grade(avg)]
           ].map(([k, v], i) => (
             <div key={k}>
-              <div className="kicker">{k}</div>
-              <div className={"font-extrabold text-[20px] " + (i === 3 ? "text-accent" : "")}>{v}</div>
+              <div className="kicker mb-1">{k}</div>
+              <div className={"font-display font-bold text-[20px] " + (i === 3 ? "text-accent" : "text-ink")}>{v}</div>
             </div>
           ))}
         </div>
 
-        <div className="py-[22px]">
+        <div className="py-5">
           <div className="kicker mb-1.5">Teacher's remarks</div>
-          <p className="text-[14.5px] m-0">
+          <p className="text-[14px] text-body m-0">
             Consistent effort through the term. Should focus a little more on written practice in Science.
           </p>
         </div>
-        <div className="flex justify-between pt-11">
-          <div className="border-t border-ink pt-2 text-[13px] w-[200px]">Class teacher</div>
-          <div className="border-t border-ink pt-2 text-[13px] w-[200px] text-right">Principal</div>
+        <div className="flex justify-between pt-10">
+          <div className="border-t border-ink pt-2 text-[13px] text-body w-[200px]">Class teacher</div>
+          <div className="border-t border-ink pt-2 text-[13px] text-body w-[200px] text-right">Principal</div>
         </div>
       </div>
     </>

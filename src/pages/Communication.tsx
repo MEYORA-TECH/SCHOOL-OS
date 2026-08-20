@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Send } from "lucide-react";
+import { Send, Users } from "lucide-react";
 import { AUDIENCES } from "../data";
 import { useApp } from "../store";
 import { Field, PageHeader } from "../ui";
@@ -24,30 +24,38 @@ export default function Communication() {
     <>
       <PageHeader title="Parent Communication" sub="Send announcements and updates to parents." />
 
-      <div className="grid gap-5 items-start" style={{ gridTemplateColumns: "300px 1fr 340px" }}>
-        <section className="panel p-[18px]">
-          <h2 className="text-[16px] m-0 mb-3.5">Who should receive this?</h2>
+      <div className="grid gap-5 items-start lg:grid-cols-[280px_1fr] xl:grid-cols-[280px_1fr_340px]">
+        {/* Audience selector */}
+        <section className="panel p-4">
+          <h2 className="text-h3 font-display font-bold text-ink mb-3">Who should receive this?</h2>
           <div className="flex flex-col gap-2">
-            {Object.keys(AUDIENCES).map(a => (
-              <button key={a} onClick={() => setAudience(a)}
-                className={"flex flex-col items-start gap-0.5 px-3.5 py-3 min-h-[33px] border cursor-pointer text-left w-full " +
-                  (audience === a ? "border-accent bg-accent-100" : "border-line bg-white hover:border-accent")}>
-                <span className={"text-[14.5px] " + (audience === a ? "font-bold" : "font-medium")}>{a}</span>
-                <span className="text-[12.5px] text-muted">{AUDIENCES[a]} parents</span>
-              </button>
-            ))}
+            {Object.keys(AUDIENCES).map(a => {
+              const on = audience === a;
+              return (
+                <button key={a} onClick={() => setAudience(a)}
+                  className={"flex items-center justify-between gap-2 px-3.5 py-3 rounded-md border cursor-pointer text-left w-full transition-colors "
+                    + (on ? "border-accent-200 bg-accent-50" : "border-line bg-surface hover:border-line-strong hover:bg-subtle")}>
+                  <div className="min-w-0">
+                    <div className={"text-[14px] " + (on ? "font-bold text-accent-700" : "font-medium text-ink")}>{a}</div>
+                    <div className="text-[12px] text-muted">{AUDIENCES[a]} parents</div>
+                  </div>
+                  {on && <span className="h-2 w-2 rounded-full bg-accent shrink-0" />}
+                </button>
+              );
+            })}
           </div>
         </section>
 
+        {/* Composer */}
         <section className="panel p-5">
-          <h2 className="text-[16px] m-0 mb-4">Write your message</h2>
+          <h2 className="text-h3 font-display font-bold text-ink mb-4">Write your message</h2>
           <div className="flex flex-col gap-4">
             <Field label="Message title">
               <input className="input" value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. Holiday tomorrow" />
             </Field>
-            <Field label="Message">
+            <Field label="Message" hint={`${body.length} / 500 characters`}>
               <textarea
-                className="w-full border border-line bg-white p-3 text-[15px] leading-relaxed"
+                className="textarea"
                 rows={9}
                 maxLength={500}
                 value={body}
@@ -55,12 +63,12 @@ export default function Communication() {
                 placeholder="Dear Parents, ..."
               />
             </Field>
-            <div className="flex justify-between text-[12.5px] text-muted -mt-2">
-              <span>Recipients: {count} parents</span>
-              <span>{body.length} / 500 characters</span>
+            <div className="flex items-center gap-2 rounded-md bg-accent-50 border border-accent-100 px-3.5 py-2.5">
+              <Users size={16} className="text-accent-700 shrink-0" />
+              <span className="text-[13px] text-accent-700 font-medium">This will reach {count} parents in "{audience}"</span>
             </div>
           </div>
-          <div className="flex gap-2.5 mt-[18px]">
+          <div className="flex gap-2.5 mt-5">
             <button className="btn btn-secondary" onClick={() => { setShowPreview(p => !p); if (!showPreview) toast("Preview shown", "This is what parents will receive"); }}>
               {showPreview ? "Hide Preview" : "Preview"}
             </button>
@@ -68,16 +76,16 @@ export default function Communication() {
           </div>
 
           {state.messages.length > 0 && (
-            <div className="mt-6 pt-[18px] border-t border-line">
+            <div className="mt-6 pt-5 border-t border-line">
               <div className="kicker mb-3">Recently sent</div>
               <div className="flex flex-col gap-2.5">
                 {state.messages.map((m, i) => (
-                  <div key={i} className="flex justify-between gap-3 border border-line px-3.5 py-2.5">
-                    <div>
-                      <div className="text-[14px] font-semibold">{m.title}</div>
-                      <div className="text-[12.5px] text-muted">{m.audience} · {m.count} parents</div>
+                  <div key={i} className="flex justify-between items-center gap-3 rounded-md border border-line px-3.5 py-2.5">
+                    <div className="min-w-0">
+                      <div className="text-[13.5px] font-semibold text-ink truncate">{m.title}</div>
+                      <div className="text-[12px] text-muted">{m.audience} · {m.count} parents</div>
                     </div>
-                    <span className="text-[12.5px] text-ok font-semibold">Sent {m.when}</span>
+                    <span className="text-[12px] text-ok font-semibold shrink-0">Sent {m.when}</span>
                   </div>
                 ))}
               </div>
@@ -85,32 +93,33 @@ export default function Communication() {
           )}
         </section>
 
-        <section className="panel p-[18px]">
-          <h2 className="text-[16px] m-0 mb-3.5">Parent's phone</h2>
+        {/* Phone preview */}
+        <section className="panel p-4 xl:sticky xl:top-24">
+          <h2 className="text-h3 font-display font-bold text-ink mb-3">Parent's phone</h2>
           {showPreview ? (
-            <div className="border border-line bg-ground p-3.5">
+            <div className="rounded-xl bg-subtle border border-line p-3.5">
               <div className="flex items-center gap-2.5 mb-3">
-                <span className="w-[30px] h-[30px] bg-accent text-white grid place-items-center font-extrabold text-[13px]">S</span>
+                <span className="h-8 w-8 rounded-full bg-accent text-white grid place-items-center font-display font-bold text-[13px]">S</span>
                 <div>
-                  <div className="text-[13.5px] font-bold">ABC School</div>
-                  <div className="text-[11.5px] text-muted">now</div>
+                  <div className="text-[13px] font-bold text-ink">ABC School</div>
+                  <div className="text-[11px] text-muted">now</div>
                 </div>
               </div>
-              <div className="bg-white border border-line p-3.5">
-                <div className="text-[13.5px] font-bold mb-1.5">{title || "Message from ABC School"}</div>
-                <div className="text-[13.5px] whitespace-pre-wrap leading-relaxed">
+              <div className="rounded-lg bg-surface border border-line p-3.5 shadow-xs">
+                <div className="text-[13.5px] font-bold text-ink mb-1.5">{title || "Message from ABC School"}</div>
+                <div className="text-[13px] text-body whitespace-pre-wrap leading-relaxed">
                   {body || "Dear Parents,\n\nTomorrow will be a holiday due to the school event.\n\nThank you,\nABC School"}
                 </div>
               </div>
               <div className="text-[11.5px] text-muted mt-2.5">Recipients: {count} parents</div>
             </div>
           ) : (
-            <div className="border border-dashed border-line p-8 text-center">
-              <div className="text-[14px] font-semibold mb-1.5">Preview hidden</div>
+            <div className="rounded-xl border border-dashed border-line p-8 text-center">
+              <div className="text-[14px] font-semibold text-ink mb-1">Preview hidden</div>
               <p className="text-[13px] text-muted m-0">Click Preview to see exactly what parents will get.</p>
             </div>
           )}
-          <p className="text-[12.5px] text-muted mt-3.5 mb-0">Sending is simulated in this prototype — no real messages go out.</p>
+          <p className="text-[12px] text-muted mt-3.5 mb-0">Sending is simulated in this prototype — no real messages go out.</p>
         </section>
       </div>
     </>

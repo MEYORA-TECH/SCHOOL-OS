@@ -1,9 +1,15 @@
 import { useMemo, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { MessageCircle, Phone, Plus, Search, Check } from "lucide-react";
+import { MessageCircle, Phone, Plus, Users, Check, Pencil } from "lucide-react";
 import { CLASS_LIST, Student, inr, initials, phoneHref, waHref } from "../data";
 import { useApp } from "../store";
-import { Avatar, BackLink, Badge, Bar, DataTable, EmptyState, Field, PageHeader, StatGrid } from "../ui";
+import {
+  Avatar, BackLink, Badge, Bar, DataTable, EmptyState, Field, PageHeader, Row, SearchInput, StatGrid, Tabs
+} from "../ui";
+
+function attColor(a: number) {
+  return a >= 90 ? "#15803d" : a >= 80 ? "#b45309" : "#be123c";
+}
 
 export function Students() {
   const { state } = useApp();
@@ -23,65 +29,56 @@ export function Students() {
     <>
       <PageHeader
         title="Students"
-        sub="Manage student information in one place."
-        action={<Link to="/students/new" className="btn btn-primary no-underline hover:no-underline text-white"><Plus size={16} /> Add Student</Link>}
+        sub="Manage student records, attendance and fees in one place."
+        action={<Link to="/students/new" className="btn btn-primary"><Plus size={16} /> Add Student</Link>}
       />
 
-      <div className="flex gap-3 items-center flex-wrap mb-4">
-        <div className="flex-1 min-w-[280px] flex items-center gap-2 border border-line px-3 h-[42px] bg-white">
-          <Search size={16} className="text-muted" />
-          <input
-            value={q}
-            onChange={e => setQ(e.target.value)}
-            placeholder="Search by student name, admission number or parent"
-            className="flex-1 border-0 bg-transparent text-[14px] outline-none"
-          />
-        </div>
-        <label className="flex items-center gap-2 text-[13px] text-muted">
-          Class
-          <select value={cls} onChange={e => setCls(e.target.value)} className="h-[42px] border border-line bg-white text-[14px] px-2.5">
-            {["All", ...CLASS_LIST].map(c => <option key={c}>{c}</option>)}
-          </select>
-        </label>
-        <label className="flex items-center gap-2 text-[13px] text-muted">
-          Status
-          <select value={status} onChange={e => setStatus(e.target.value)} className="h-[42px] border border-line bg-white text-[14px] px-2.5">
-            {["All", "Active", "Inactive"].map(c => <option key={c}>{c}</option>)}
-          </select>
-        </label>
-        <span className="text-[13px] text-muted">{rows.length} of {state.students.length} students</span>
+      <div className="panel p-3 mb-4 flex flex-wrap items-center gap-3">
+        <SearchInput value={q} onChange={setQ} placeholder="Search by name, admission number or parent" className="flex-1 min-w-[240px]" />
+        <select value={cls} onChange={e => setCls(e.target.value)} className="select w-auto min-w-[130px]" aria-label="Filter by class">
+          {["All", ...CLASS_LIST].map(c => <option key={c}>{c === "All" ? "All classes" : c}</option>)}
+        </select>
+        <select value={status} onChange={e => setStatus(e.target.value)} className="select w-auto min-w-[120px]" aria-label="Filter by status">
+          {["All", "Active", "Inactive"].map(c => <option key={c}>{c === "All" ? "All status" : c}</option>)}
+        </select>
+        <span className="text-[13px] text-muted ml-auto pr-1">
+          <strong className="text-ink">{rows.length}</strong> of {state.students.length} students
+        </span>
       </div>
 
-      <div className="panel">
-        <DataTable head={["Admission No.", "Student", "Class", "Parent", "Phone", "Attendance", "Fees", "Action"]}>
+      <div className="panel overflow-hidden">
+        <DataTable head={["Student", "Class", "Parent", "Phone", { label: "Attendance", align: "center" }, { label: "Fees", align: "center" }, { label: "", align: "right" }]} minWidth={840}>
           {rows.map(s => {
             const pending = s.feeTotal - s.feePaid;
             return (
-              <tr key={s.id} className="border-b border-line hover:bg-accent-100">
-                <td className="td text-muted text-[13.5px]">{s.adm}</td>
+              <Row key={s.id} onClick={undefined}>
                 <td className="td">
-                  <div className="flex items-center gap-3">
+                  <Link to={`/students/${s.id}`} className="flex items-center gap-3 group">
                     <Avatar name={s.name} />
-                    <span className="text-[14.5px] font-semibold">{s.name}</span>
-                  </div>
+                    <div className="min-w-0">
+                      <div className="text-[14px] font-semibold text-ink group-hover:text-accent-700 transition-colors truncate">{s.name}</div>
+                      <div className="text-[12px] text-muted">{s.adm}</div>
+                    </div>
+                  </Link>
                 </td>
                 <td className="td">{s.cls}</td>
                 <td className="td">{s.father}</td>
-                <td className="td text-muted">{s.phone}</td>
-                <td className="td font-semibold" style={{ color: s.attendance >= 90 ? "#15803d" : s.attendance >= 80 ? "#b45309" : "#b91c1c" }}>
-                  {s.attendance}%
+                <td className="td text-muted tabular-nums">{s.phone}</td>
+                <td className="td text-center font-semibold tabular-nums" style={{ color: attColor(s.attendance) }}>{s.attendance}%</td>
+                <td className="td text-center">{pending > 0 ? <Badge tone="warn" dot>Pending</Badge> : <Badge tone="ok" dot>Paid</Badge>}</td>
+                <td className="td text-right">
+                  <Link to={`/students/${s.id}`} className="link">View profile</Link>
                 </td>
-                <td className="td">{pending > 0 ? <Badge tone="warn">Pending</Badge> : <Badge tone="ok">Paid</Badge>}</td>
-                <td className="td"><Link to={`/students/${s.id}`} className="text-[13.5px] font-semibold underline">View profile</Link></td>
-              </tr>
+              </Row>
             );
           })}
         </DataTable>
         {rows.length === 0 && (
           <EmptyState
+            icon={Users}
             title="No students found"
-            body="Try changing your search or filters."
-            action={<button className="btn btn-secondary" onClick={() => { setQ(""); setCls("All"); setStatus("All"); }}>Clear Filters</button>}
+            body="No student matches your search or filters. Try broadening them, or add a new student."
+            action={<button className="btn btn-secondary" onClick={() => { setQ(""); setCls("All"); setStatus("All"); }}>Clear filters</button>}
           />
         )}
       </div>
@@ -89,7 +86,7 @@ export function Students() {
   );
 }
 
-const STUDENT_FIELDS: [keyof Student | string, string, string?][] = [
+const STUDENT_FIELDS: [string, string, string?][] = [
   ["name", "Student name"], ["dob", "Date of birth", "date"], ["gender", "Gender"], ["blood", "Blood group"],
   ["adm", "Admission number"], ["admDate", "Admission date", "date"], ["cls", "Class (e.g. 9-A)"], ["sec", "Section"]
 ];
@@ -97,6 +94,12 @@ const PARENT_FIELDS: [string, string][] = [
   ["father", "Father's name"], ["mother", "Mother's name"], ["phone", "Phone"], ["whatsapp", "WhatsApp number"], ["email", "Email"]
 ];
 const ADDRESS_FIELDS: [string, string][] = [["address", "Address"], ["city", "City"], ["pin", "Pincode"]];
+
+const SECTIONS = [
+  { n: 1, title: "Student information", note: "Name and class are required.", fields: STUDENT_FIELDS },
+  { n: 2, title: "Parent information", note: null, fields: PARENT_FIELDS as [string, string, string?][] },
+  { n: 3, title: "Address", note: null, fields: ADDRESS_FIELDS as [string, string, string?][] }
+];
 
 export function AddStudent() {
   const { state, dispatch, toast } = useApp();
@@ -127,31 +130,47 @@ export function AddStudent() {
     navigate("/students");
   }
 
-  const section = (title: string, note: string | null, fields: [string, string, string?][]) => (
-    <section className="panel p-[22px]">
-      <h2 className="text-[18px] m-0 mb-1">{title}</h2>
-      {note && <p className="text-[13.5px] text-muted m-0 mb-[18px]">{note}</p>}
-      <div className={"grid grid-cols-2 gap-4" + (note ? "" : " mt-[18px]")}>
-        {fields.map(([k, label, type]) => (
-          <Field key={k} label={label}>
-            <input className="input" type={type || "text"} value={form[k] || ""} onChange={e => set(k, e.target.value)} />
-          </Field>
-        ))}
-      </div>
-    </section>
-  );
-
   return (
     <>
       <BackLink to="/students">Back to Students</BackLink>
-      <PageHeader title="Add Student" sub="Only the basics — you can add more details later." />
-      <div className="max-w-[920px] flex flex-col gap-5">
-        {section("Student information", "Name and class are required.", STUDENT_FIELDS as [string, string, string?][])}
-        {section("Parent information", null, PARENT_FIELDS)}
-        {section("Address", null, ADDRESS_FIELDS)}
-        <div className="flex gap-3 pb-5">
-          <button className="btn btn-primary h-[46px] px-[22px] text-[14.5px]" onClick={save}>Save Student</button>
-          <button className="btn btn-secondary h-[46px] px-[22px] text-[14.5px]" onClick={() => navigate("/students")}>Cancel</button>
+      <PageHeader title="Add Student" sub="Only the basics — you can add more details later from the student profile." />
+
+      <div className="grid lg:grid-cols-[220px_1fr] gap-6 items-start max-w-[1000px]">
+        {/* Section rail — reads as steps without a rigid wizard */}
+        <nav className="hidden lg:block sticky top-24">
+          <div className="flex flex-col gap-1">
+            {SECTIONS.map(s => (
+              <a key={s.n} href={"#section-" + s.n}
+                className="flex items-center gap-3 px-3 py-2.5 rounded-md text-[13.5px] text-body hover:bg-subtle transition-colors">
+                <span className="grid place-items-center h-6 w-6 rounded-full bg-accent-50 text-accent-700 text-[12px] font-bold shrink-0">{s.n}</span>
+                {s.title}
+              </a>
+            ))}
+          </div>
+        </nav>
+
+        <div className="flex flex-col gap-5">
+          {SECTIONS.map(s => (
+            <section key={s.n} id={"section-" + s.n} className="card p-6 scroll-mt-24">
+              <div className="flex items-baseline gap-2.5 mb-1">
+                <span className="grid place-items-center h-6 w-6 rounded-full bg-accent-50 text-accent-700 text-[12px] font-bold shrink-0 lg:hidden">{s.n}</span>
+                <h2 className="text-h3 font-display font-bold text-ink">{s.title}</h2>
+              </div>
+              {s.note && <p className="text-[13px] text-muted m-0 mb-4">{s.note}</p>}
+              <div className={"grid sm:grid-cols-2 gap-4 " + (s.note ? "" : "mt-4")}>
+                {s.fields.map(([k, label, type]) => (
+                  <Field key={k} label={label} required={k === "name" || k === "cls"}>
+                    <input className="input" type={type || "text"} value={form[k] || ""} onChange={e => set(k, e.target.value)} />
+                  </Field>
+                ))}
+              </div>
+            </section>
+          ))}
+
+          <div className="sticky bottom-0 -mx-1 px-1 py-3 bg-canvas/80 backdrop-blur-sm flex gap-3 border-t border-line">
+            <button className="btn btn-primary" onClick={save}>Save Student</button>
+            <button className="btn btn-secondary" onClick={() => navigate("/students")}>Cancel</button>
+          </div>
         </div>
       </div>
     </>
@@ -174,32 +193,35 @@ export function StudentProfile() {
   return (
     <>
       <BackLink to="/students">Back to Students</BackLink>
-      <div className="flex items-start justify-between gap-6">
-        <div className="flex items-center gap-[18px]">
-          <span className="w-[66px] h-[66px] bg-accent-200 text-accent-700 grid place-items-center font-extrabold text-[24px]">{initials(s.name)}</span>
-          <div>
-            <h1 className="text-[30px] mb-1.5">{s.name}</h1>
-            <div className="text-[14px] text-muted">Class {s.cls} &nbsp;·&nbsp; Admission No. {s.adm} &nbsp;·&nbsp; {s.status}</div>
+
+      <div className="card p-5 sm:p-6 mb-6">
+        <div className="flex flex-wrap items-start justify-between gap-5">
+          <div className="flex items-center gap-4 min-w-0">
+            <span className="h-16 w-16 rounded-full bg-accent-100 text-accent-700 grid place-items-center font-display font-bold text-[22px] shrink-0">{initials(s.name)}</span>
+            <div className="min-w-0">
+              <h1 className="text-h1 font-display font-bold text-ink truncate">{s.name}</h1>
+              <div className="mt-1.5 flex flex-wrap items-center gap-2 text-[13px] text-muted">
+                <span>Class {s.cls}</span><span className="text-line-strong">·</span>
+                <span>Adm. {s.adm}</span><span className="text-line-strong">·</span>
+                <Badge tone={s.status === "Active" ? "ok" : "neutral"} dot>{s.status}</Badge>
+              </div>
+            </div>
+          </div>
+          <div className="flex gap-2.5 flex-wrap">
+            <a className="btn btn-secondary" href={phoneHref(s.phone)}><Phone size={16} /> Call</a>
+            <a className="btn btn-wa" target="_blank" rel="noreferrer"
+              href={waHref(s.whatsapp, "Dear " + s.father + ", a message from ABC Matriculation Higher Secondary School regarding " + s.name + " (" + s.cls + ").")}
+              onClick={() => toast("WhatsApp opened", "Message to " + s.father)}>
+              <MessageCircle size={16} /> WhatsApp
+            </a>
+            <button className="btn btn-primary" onClick={() => toast("Edit mode", "Prototype — fields are editable in Add Student")}>
+              <Pencil size={15} /> Edit
+            </button>
           </div>
         </div>
-        <div className="flex gap-2.5 flex-wrap">
-          <a className="btn btn-secondary text-ink no-underline hover:no-underline" href={phoneHref(s.phone)}><Phone size={16} /> Call Parent</a>
-          <a
-            className="btn btn-wa text-white no-underline hover:no-underline"
-            target="_blank"
-            rel="noreferrer"
-            href={waHref(s.whatsapp, "Dear " + s.father + ", a message from ABC Matriculation Higher Secondary School regarding " + s.name + " (" + s.cls + ").")}
-            onClick={() => toast("WhatsApp opened", "Message to " + s.father)}
-          >
-            <MessageCircle size={16} /> WhatsApp Parent
-          </a>
-          <button className="btn btn-secondary" onClick={() => navigate("/communication")}>Send Message</button>
-          <button className="btn btn-primary" onClick={() => toast("Edit mode", "Prototype — fields are editable in Add Student")}>Edit Student</button>
-        </div>
       </div>
-      <div className="rule my-5" />
 
-      <div className="mb-5">
+      <div className="mb-6">
         <StatGrid
           cols={3}
           items={[
@@ -210,27 +232,16 @@ export function StudentProfile() {
         />
       </div>
 
-      <div className="flex gap-0.5 border-b-2 border-divider mb-[22px]">
-        {TABS.map(t => (
-          <button
-            key={t}
-            onClick={() => setTab(t)}
-            className={"px-[18px] py-2.5 border-0 border-b-[3px] bg-transparent text-[14.5px] cursor-pointer " +
-              (tab === t ? "border-accent text-accent-700 font-bold" : "border-transparent text-muted font-medium hover:text-accent-700")}
-          >
-            {t}
-          </button>
-        ))}
-      </div>
+      <Tabs tabs={TABS} value={tab} onChange={setTab} />
 
       {tab === "Overview" && (
-        <div className="grid grid-cols-2 gap-5">
+        <div className="grid md:grid-cols-2 gap-5">
           <InfoCard title="Personal information" rows={[["Date of birth", s.dob], ["Gender", s.gender], ["Blood group", s.blood], ["Admission date", s.admDate], ["Class", s.cls]]} />
           <InfoCard title="Parent information" rows={[["Father", s.father], ["Mother", s.mother], ["Phone", s.phone], ["WhatsApp", s.whatsapp], ["Email", s.email]]} />
           <InfoCard title="Contact information" rows={[["Address", s.address], ["City", s.city], ["Pincode", s.pin]]} />
           <section className="panel p-5">
-            <h2 className="text-[17px] m-0 mb-3.5">Recent activity</h2>
-            <div className="flex flex-col gap-3">
+            <h2 className="text-h3 font-display font-bold text-ink mb-4">Recent activity</h2>
+            <div className="flex flex-col gap-3.5">
               {[
                 ["Fee payment received", s.payments.length ? s.payments[s.payments.length - 1].date : "—"],
                 ["Attendance marked present", "Today, 9:05 AM"],
@@ -238,10 +249,10 @@ export function StudentProfile() {
                 ["Term 1 report card generated", "12 Aug 2026"]
               ].map(([text, meta]) => (
                 <div key={text} className="flex items-start gap-3">
-                  <Check size={15} className="text-ok mt-1 shrink-0" />
+                  <span className="grid place-items-center h-6 w-6 rounded-full bg-ok-bg text-ok mt-0.5 shrink-0"><Check size={13} /></span>
                   <div>
-                    <div className="text-[14px]">{text}</div>
-                    <div className="text-[12.5px] text-muted">{meta}</div>
+                    <div className="text-[13.5px] text-ink">{text}</div>
+                    <div className="text-[12px] text-muted">{meta}</div>
                   </div>
                 </div>
               ))}
@@ -252,13 +263,13 @@ export function StudentProfile() {
 
       {tab === "Attendance" && (
         <section className="panel p-5 max-w-[640px]">
-          <h2 className="text-[17px] m-0 mb-4">Month-wise attendance</h2>
-          <div className="flex flex-col gap-3">
+          <h2 className="text-h3 font-display font-bold text-ink mb-4">Month-wise attendance</h2>
+          <div className="flex flex-col gap-3.5">
             {[["April", 96], ["May", 92], ["June", 95], ["July", 93], ["August", s.attendance]].map(([m, p]) => (
               <div key={m as string} className="grid items-center gap-3.5" style={{ gridTemplateColumns: "80px 1fr 50px" }}>
-                <span className="text-[14px]">{m}</span>
-                <Bar pct={p as number} color="#15803d" />
-                <span className="text-[13.5px] text-right text-muted">{p}%</span>
+                <span className="text-[13.5px] text-body">{m}</span>
+                <Bar pct={p as number} color="#16a34a" />
+                <span className="text-[13px] text-right text-muted tabular-nums">{p}%</span>
               </div>
             ))}
           </div>
@@ -268,14 +279,14 @@ export function StudentProfile() {
       {tab === "Fees" && (
         <section className="panel p-5 max-w-[760px]">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-[17px] m-0">Fee summary</h2>
-            <Link to={`/fees/${s.id}`} className="text-[13.5px] font-semibold underline">Open in Fees</Link>
+            <h2 className="text-h3 font-display font-bold text-ink">Fee summary</h2>
+            <Link to={`/fees/${s.id}`} className="link">Open in Fees</Link>
           </div>
           <div className="grid grid-cols-3 gap-5">
-            {[["Total fee", inr(s.feeTotal), ""], ["Paid", inr(s.feePaid), "#15803d"], ["Pending", pending > 0 ? inr(pending) : "—", "#b45309"]].map(([l, v, c]) => (
+            {([["Total fee", inr(s.feeTotal), ""], ["Paid", inr(s.feePaid), "#15803d"], ["Pending", pending > 0 ? inr(pending) : "—", "#b45309"]] as [string, string, string][]).map(([l, v, c]) => (
               <div key={l}>
-                <div className="text-muted text-[12.5px]">{l}</div>
-                <div className="font-extrabold text-[22px]" style={c ? { color: c } : undefined}>{v}</div>
+                <div className="kicker mb-1.5">{l}</div>
+                <div className="font-display font-bold text-[22px] text-ink" style={c ? { color: c } : undefined}>{v}</div>
               </div>
             ))}
           </div>
@@ -284,19 +295,18 @@ export function StudentProfile() {
 
       {tab === "Exams" && (
         <section className="panel p-5 max-w-[640px]">
-          <h2 className="text-[17px] m-0 mb-4">Term 1 marks</h2>
-          <div className="flex flex-col gap-3">
+          <h2 className="text-h3 font-display font-bold text-ink mb-4">Term 1 marks</h2>
+          <div className="flex flex-col gap-3.5">
             {Object.entries(s.marks).map(([sub, score]) => (
               <div key={sub} className="grid items-center gap-3.5" style={{ gridTemplateColumns: "120px 1fr 80px" }}>
-                <span className="text-[14px]">{sub}</span>
-                <Bar pct={score} />
-                <span className="text-[13.5px] text-right text-muted">{score} / 100</span>
+                <span className="text-[13.5px] text-body">{sub}</span>
+                <Bar pct={score} color={score >= 80 ? "#16a34a" : score >= 60 ? "#2563eb" : "#d97706"} />
+                <span className="text-[13px] text-right text-muted tabular-nums">{score} / 100</span>
               </div>
             ))}
           </div>
         </section>
       )}
-
     </>
   );
 }
@@ -304,12 +314,12 @@ export function StudentProfile() {
 function InfoCard({ title, rows }: { title: string; rows: [string, string][] }) {
   return (
     <section className="panel p-5">
-      <h2 className="text-[17px] m-0 mb-3.5">{title}</h2>
-      <div className="grid gap-x-5 gap-y-2.5 text-[14px]" style={{ gridTemplateColumns: "auto 1fr" }}>
+      <h2 className="text-h3 font-display font-bold text-ink mb-4">{title}</h2>
+      <div className="grid gap-x-5 gap-y-3 text-[14px]" style={{ gridTemplateColumns: "auto 1fr" }}>
         {rows.map(([k, v]) => (
           <div key={k} className="contents">
             <span className="text-muted">{k}</span>
-            <span>{v}</span>
+            <span className="text-ink font-medium text-right">{v}</span>
           </div>
         ))}
       </div>

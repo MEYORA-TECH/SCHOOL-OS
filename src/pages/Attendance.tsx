@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Check, X } from "lucide-react";
+import { Check, X, CheckCheck } from "lucide-react";
 import { CLASS_LIST, Mark } from "../data";
 import { useApp } from "../store";
 import { Avatar, EmptyState, PageHeader } from "../ui";
@@ -27,6 +27,7 @@ export default function Attendance() {
 
   const present = Object.values(marks).filter(m => m === "present").length;
   const absent = Object.keys(marks).length - present;
+  const pct = roll.length ? Math.round((present / roll.length) * 100) : 0;
 
   function save() {
     dispatch({ type: "saveAttendance", cls, marks });
@@ -37,69 +38,91 @@ export default function Attendance() {
     <>
       <PageHeader title="Mark Attendance" sub="Tap Present or Absent for each student, then save." />
 
-      <div className="panel flex gap-4 items-end flex-wrap px-5 py-[18px] mb-5">
-        <div className="flex flex-col gap-1.5">
-          <span className="text-[12.5px] text-muted">Date</span>
-          <strong className="text-[15.5px]">Tuesday, 18 August 2026</strong>
+      {/* Control bar */}
+      <div className="panel p-4 mb-5 flex flex-wrap gap-x-6 gap-y-4 items-center">
+        <div>
+          <div className="kicker mb-1">Date</div>
+          <div className="text-[14px] font-semibold text-ink">Tuesday, 18 August 2026</div>
         </div>
-        <div className="h-11 w-px bg-line" />
-        <label className="flex flex-col gap-1.5 text-[12.5px] text-muted">
-          Class
-          <select value={cls} onChange={e => setCls(e.target.value)} className="h-11 border border-line bg-white text-[15px] px-3 min-w-[120px] text-ink">
+        <div className="h-9 w-px bg-line hidden sm:block" />
+        <label className="flex flex-col gap-1">
+          <span className="kicker">Class</span>
+          <select value={cls} onChange={e => setCls(e.target.value)} className="select w-auto min-w-[130px] h-9">
             {options.map(c => <option key={c}>{c}</option>)}
           </select>
         </label>
-        <div className="flex flex-col gap-1.5">
-          <span className="text-[12.5px] text-muted">Section</span>
-          <strong className="text-[15.5px] h-11 flex items-center">{cls.split("-")[1]}</strong>
+        <div>
+          <div className="kicker mb-1">Section</div>
+          <div className="text-[14px] font-semibold text-ink">{cls.split("-")[1]}</div>
         </div>
-        <button
-          className="ml-auto btn h-11 border-accent bg-white text-accent-700 hover:bg-accent-100"
-          onClick={() => { setMarks(Object.fromEntries(roll.map(s => [s.id, "present" as Mark]))); toast("All students marked present", "Review and save"); }}
-        >
-          Mark All Present
-        </button>
+
+        {/* live summary */}
+        <div className="flex items-center gap-4 ml-auto">
+          <div className="text-right">
+            <div className="font-display font-bold text-[22px] leading-none text-ink tabular-nums">{pct}%</div>
+            <div className="text-[11.5px] text-muted mt-0.5">{present}/{roll.length} present</div>
+          </div>
+          <button
+            className="btn btn-accent-soft"
+            onClick={() => { setMarks(Object.fromEntries(roll.map(s => [s.id, "present" as Mark]))); toast("All students marked present", "Review and save"); }}
+          >
+            <CheckCheck size={16} /> Mark all present
+          </button>
+        </div>
       </div>
 
-      <div className="panel">
-        {roll.map(s => {
+      {/* Roll */}
+      <div className="panel overflow-hidden">
+        {roll.map((s, i) => {
           const isPresent = marks[s.id] !== "absent";
           return (
-            <div key={s.id} className="flex items-center gap-4 px-5 py-3.5 border-b border-line">
-              <Avatar name={s.name} size={36} />
-              <div className="flex-1">
-                <div className="text-[15.5px] font-semibold">{s.name}</div>
-                <div className="text-[12.5px] text-muted">{s.adm}</div>
+            <div key={s.id} className={"flex items-center gap-4 px-4 sm:px-5 py-3 transition-colors " + (i < roll.length - 1 ? "border-b border-line " : "") + (isPresent ? "" : "bg-bad-bg/30")}>
+              <span className="text-[12px] text-faint w-6 tabular-nums hidden sm:block">{String(i + 1).padStart(2, "0")}</span>
+              <Avatar name={s.name} size={38} />
+              <div className="flex-1 min-w-0">
+                <div className="text-[14.5px] font-semibold text-ink truncate">{s.name}</div>
+                <div className="text-[12px] text-muted">{s.adm}</div>
               </div>
-              <div className="flex gap-2.5">
+              {/* Segmented Present/Absent toggle */}
+              <div className="flex rounded-md border border-line overflow-hidden shrink-0">
                 <button
                   onClick={() => setMarks(m => ({ ...m, [s.id]: "present" }))}
                   aria-pressed={isPresent}
-                  className={"flex items-center gap-2 h-11 px-[22px] border-2 font-bold text-[14.5px] cursor-pointer " +
-                    (isPresent ? "bg-ok border-ok text-white" : "bg-white border-line text-muted")}
+                  className={"flex items-center gap-1.5 h-9 px-3.5 text-[13px] font-semibold transition-colors border-r border-line "
+                    + (isPresent ? "bg-ok-strong text-white" : "bg-surface text-muted hover:bg-ok-bg hover:text-ok")}
                 >
-                  <Check size={16} /> Present
+                  <Check size={15} /> Present
                 </button>
                 <button
                   onClick={() => setMarks(m => ({ ...m, [s.id]: "absent" }))}
                   aria-pressed={!isPresent}
-                  className={"flex items-center gap-2 h-11 px-[22px] border-2 font-bold text-[14.5px] cursor-pointer " +
-                    (!isPresent ? "bg-bad border-bad text-white" : "bg-white border-line text-muted")}
+                  className={"flex items-center gap-1.5 h-9 px-3.5 text-[13px] font-semibold transition-colors "
+                    + (!isPresent ? "bg-bad-strong text-white" : "bg-surface text-muted hover:bg-bad-bg hover:text-bad")}
                 >
-                  <X size={16} /> Absent
+                  <X size={15} /> Absent
                 </button>
               </div>
             </div>
           );
         })}
         {roll.length === 0 && <EmptyState title="No students in this class" body="Choose another class to mark attendance." />}
-        <div className="flex items-center gap-6 px-5 py-[18px] bg-ground">
-          <span className="flex items-center gap-2 text-[15px]"><span className="w-2.5 h-2.5 block bg-ok" />Present: <strong>{present}</strong></span>
-          <span className="flex items-center gap-2 text-[15px]"><span className="w-2.5 h-2.5 block bg-bad" />Absent: <strong>{absent}</strong></span>
-          <span className="text-[14px] text-muted">of {roll.length} students</span>
-          <button className="ml-auto btn btn-primary h-12 px-7 text-[15px]" onClick={save}>Save Attendance</button>
-        </div>
       </div>
+
+      {/* Sticky save bar */}
+      {roll.length > 0 && (
+        <div className="sticky bottom-4 mt-4 z-10">
+          <div className="card shadow-md px-5 py-3 flex items-center gap-5">
+            <span className="flex items-center gap-2 text-[14px] text-body">
+              <span className="h-2.5 w-2.5 rounded-full bg-ok-strong" /> Present <strong className="text-ink tabular-nums">{present}</strong>
+            </span>
+            <span className="flex items-center gap-2 text-[14px] text-body">
+              <span className="h-2.5 w-2.5 rounded-full bg-bad-strong" /> Absent <strong className="text-ink tabular-nums">{absent}</strong>
+            </span>
+            <span className="text-[13px] text-muted hidden sm:inline">of {roll.length} students</span>
+            <button className="ml-auto btn btn-primary px-6" onClick={save}>Save Attendance</button>
+          </div>
+        </div>
+      )}
     </>
   );
 }

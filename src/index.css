@@ -3,31 +3,161 @@
 @tailwind utilities;
 
 @layer base {
-  html { -webkit-font-smoothing: antialiased; }
-  body { @apply bg-ground text-ink font-sans text-[15px] leading-relaxed; margin: 0; }
-  h1, h2, h3, h4 { @apply font-extrabold tracking-[-0.015em] leading-tight; }
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+  body {
+    @apply bg-canvas text-body font-sans;
+    font-size: 14px;
+    line-height: 1.5;
+    margin: 0;
+    font-feature-settings: "cv02", "cv03", "cv04", "ss01";
+  }
+  h1, h2, h3, h4 {
+    @apply font-display font-bold text-ink tracking-[-0.015em];
+    line-height: 1.15;
+    margin: 0;
+  }
   a { @apply text-accent no-underline; }
-  a:hover { @apply text-accent-700 underline; }
-  *:focus-visible { outline: 2px solid #1d4ed8; outline-offset: 2px; }
-  /* No rounded corners anywhere — Modernist rule. */
-  * { border-radius: 0 !important; }
+  a:hover { @apply text-accent-700; }
+
+  /* One visible, consistent focus ring everywhere. */
+  *:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.32);
+    border-radius: 6px;
+  }
+
+  /* Calmer native scrollbars on desktop. */
+  * { scrollbar-width: thin; scrollbar-color: #cbd5e1 transparent; }
+  *::-webkit-scrollbar { width: 10px; height: 10px; }
+  *::-webkit-scrollbar-thumb { background: #cbd5e1; border: 3px solid transparent; background-clip: content-box; border-radius: 9999px; }
+  *::-webkit-scrollbar-thumb:hover { background: #94a3b8; background-clip: content-box; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.001ms !important;
+      transition-duration: 0.001ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
 }
 
 @layer components {
-  /* Every control is 33px tall, everywhere — one size for low-tech users. */
-  .btn { @apply inline-flex items-center gap-2 h-[33px] px-[18px] text-[14px] font-bold cursor-pointer border whitespace-nowrap; }
-  .btn-primary { @apply bg-accent text-white border-transparent hover:bg-accent-600; }
-  .btn-secondary { @apply bg-white border-line hover:border-accent; }
-  .btn-accent-soft { @apply bg-accent-100 text-accent-700 border-accent hover:bg-accent-200; }
-  .btn-wa { @apply bg-[#0f7a4a] text-white border-transparent hover:bg-[#0c6a40]; }
-  .btn:disabled { @apply opacity-45 cursor-not-allowed; }
-  .link { @apply text-[13.5px] font-semibold underline cursor-pointer bg-transparent border-0 p-0 text-accent; }
-  .input, .select { @apply h-[33px] w-full border border-line bg-white px-3 text-[14.5px] text-ink; }
-  .panel { @apply bg-white border border-line; }
-  .th { @apply text-left px-4 py-[13px] text-[11px] uppercase tracking-[0.08em] text-muted font-semibold; }
-  .td { @apply px-4 py-[13px] text-[14px]; }
-  .rule { @apply h-[2px] bg-divider; }
-  .kicker { @apply text-[11.5px] uppercase tracking-[0.08em] text-muted; }
-  .stat { @apply font-extrabold text-[30px] tracking-[-0.02em]; }
-  .sectionhead { @apply flex items-center justify-between px-5 py-4 border-b-2 border-divider; }
+  /* ---------- Buttons ---------- */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 h-[38px] px-4 rounded-md
+           text-[13.5px] font-semibold cursor-pointer whitespace-nowrap select-none
+           border transition-all duration-150 ease-out;
+  }
+  .btn:active { transform: translateY(0.5px); }
+  .btn:disabled { @apply opacity-50 cursor-not-allowed; transform: none; }
+
+  .btn-primary {
+    @apply bg-accent text-white border-accent shadow-xs hover:bg-accent-600 hover:border-accent-600 hover:shadow-sm;
+  }
+  .btn-secondary {
+    @apply bg-surface text-body border-line hover:bg-subtle hover:border-line-strong hover:text-ink;
+  }
+  .btn-ghost {
+    @apply bg-transparent text-body border-transparent hover:bg-subtle hover:text-ink;
+  }
+  .btn-accent-soft {
+    @apply bg-accent-50 text-accent-700 border-accent-100 hover:bg-accent-100 hover:border-accent-200;
+  }
+  .btn-wa {
+    @apply bg-[#0f7a4a] text-white border-[#0f7a4a] shadow-xs hover:bg-[#0c6a40] hover:border-[#0c6a40];
+  }
+  .btn-danger {
+    @apply bg-bad-strong text-white border-bad-strong shadow-xs hover:brightness-95;
+  }
+  /* Icon-only square button */
+  .icon-btn {
+    @apply inline-flex items-center justify-center h-[38px] w-[38px] rounded-md border border-line
+           bg-surface text-muted cursor-pointer transition-all duration-150
+           hover:bg-subtle hover:text-ink hover:border-line-strong;
+  }
+
+  .link {
+    @apply text-[13px] font-semibold cursor-pointer bg-transparent border-0 p-0
+           text-accent hover:text-accent-700 transition-colors;
+  }
+
+  /* ---------- Form controls ---------- */
+  .input, .select {
+    @apply h-[38px] w-full rounded-md border border-line bg-surface px-3 text-[14px] text-ink
+           transition-all duration-150 placeholder:text-faint
+           hover:border-line-strong focus:border-accent-400 focus:shadow-focus;
+  }
+  .select { @apply pr-9 appearance-none bg-no-repeat cursor-pointer; }
+  .select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 6l4 4 4-4'/%3E%3C/svg%3E");
+    background-position: right 10px center;
+  }
+  .textarea {
+    @apply w-full rounded-md border border-line bg-surface px-3 py-2.5 text-[14px] text-ink leading-relaxed
+           transition-all duration-150 placeholder:text-faint resize-y
+           hover:border-line-strong focus:border-accent-400 focus:shadow-focus;
+  }
+  /* Search box shell: wrap an input in .field-shell for the search icon layout */
+  .field-shell {
+    @apply flex items-center gap-2 h-[38px] rounded-md border border-line bg-surface px-3
+           transition-all duration-150 hover:border-line-strong
+           focus-within:border-accent-400 focus-within:shadow-focus;
+  }
+  .field-shell input {
+    @apply flex-1 border-0 bg-transparent text-[14px] text-ink outline-none min-w-0 placeholder:text-faint;
+  }
+
+  /* ---------- Surfaces ---------- */
+  .panel { @apply bg-surface border border-line rounded-lg shadow-xs; }
+  .card  { @apply bg-surface border border-line rounded-xl shadow-card; }
+
+  /* ---------- Tables ---------- */
+  .th {
+    @apply text-left px-4 py-3 text-[11px] font-semibold uppercase tracking-[0.06em] text-muted
+           bg-subtle/60 whitespace-nowrap;
+  }
+  .td { @apply px-4 py-3 text-[14px] text-body align-middle; }
+
+  /* ---------- Bits ---------- */
+  .rule { @apply h-px bg-line border-0; }
+  .kicker { @apply text-[11px] font-semibold uppercase tracking-[0.07em] text-muted; }
+  .stat { @apply font-display font-bold text-[26px] tracking-[-0.02em] text-ink; }
+  .sectionhead { @apply flex items-center justify-between gap-4 px-5 py-4 border-b border-line; }
+
+  .chip {
+    @apply inline-flex items-center gap-1.5 h-6 px-2.5 rounded-full text-[12px] font-semibold;
+  }
+  .tab {
+    @apply px-3.5 h-9 inline-flex items-center border-b-2 bg-transparent text-[13.5px] cursor-pointer
+           transition-colors duration-150 -mb-px;
+  }
+  .tab-active { @apply border-accent text-accent-700 font-semibold; }
+  .tab-idle { @apply border-transparent text-muted font-medium hover:text-ink; }
+
+  /* Hero banner gradient (dashboard welcome) */
+  .hero-gradient {
+    background:
+      radial-gradient(120% 140% at 100% 0%, rgba(139,92,246,0.16) 0%, rgba(139,92,246,0) 55%),
+      linear-gradient(105deg, #eef4ff 0%, #eaf0ff 45%, #f2ecff 100%);
+  }
+  /* Gradient chart bar (blue -> violet), grows from the bottom */
+  .bar-gradient {
+    background: linear-gradient(180deg, #6366f1 0%, #3b82f6 100%);
+  }
+  .bar-gradient-alt {
+    background: linear-gradient(180deg, #8b5cf6 0%, #6366f1 100%);
+  }
+
+  /* Skeleton shimmer for loading states */
+  .skel {
+    @apply rounded-md bg-subtle;
+    background-image: linear-gradient(90deg, rgba(226,232,240,0) 0%, rgba(203,213,225,0.55) 50%, rgba(226,232,240,0) 100%);
+    background-size: 200% 100%;
+    animation: skel 1.3s ease-in-out infinite;
+  }
+  @keyframes skel { from { background-position: 200% 0; } to { background-position: -200% 0; } }
 }
