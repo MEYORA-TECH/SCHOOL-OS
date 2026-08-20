@@ -113,40 +113,185 @@ function terms(total: number, paid: number): FeeTerm[] {
   });
 }
 
-type Row = [string, string, string, string, string, string, string, number, number, number, string, string, string, Record<string, number>];
+/* ------------------------------------------------------------------ *
+ *  Student roster — generated from Tamil name pools.
+ *  ~30 students per section (8 sections → ~240 students).
+ *  Fully deterministic (seeded PRNG) so the demo is identical on every
+ *  load — no random hydration drift, but plenty of realistic variety.
+ * ------------------------------------------------------------------ */
 
-const RAW: Row[] = [
-  ["STU1024","Arjun Kumar","10-A","Ravi Kumar","Meena Kumar","98410 32211","98410 32211",94,60000,55000,"2009-04-12","Male","B+",{Maths:82,Science:76,English:88,Social:79,Tamil:85}],
-  ["STU1025","Rahul Kumar","10-A","Suresh Babu","Latha Suresh","98842 71904","98842 71904",91,60000,60000,"2009-06-02","Male","O+",{Maths:74,Science:81,English:79,Social:72,Tamil:80}],
-  ["STU1026","Priya Sharma","10-A","Anil Sharma","Kavita Sharma","94441 20863","94441 20863",88,60000,42000,"2009-09-19","Female","A+",{Maths:91,Science:94,English:90,Social:88,Tamil:92}],
-  ["STU1027","Karthik Raja","10-A","Mohan Raja","Devi Mohan","90031 45782","90031 45782",96,60000,60000,"2009-02-27","Male","B-",{Maths:68,Science:71,English:75,Social:70,Tamil:78}],
-  ["STU1028","Sneha Iyer","10-B","Ganesh Iyer","Radha Iyer","93810 66427","93810 66427",93,60000,30000,"2009-11-05","Female","AB+",{Maths:85,Science:80,English:92,Social:84,Tamil:88}],
-  ["STU1029","Vikram Naidu","10-B","Prasad Naidu","Sujata Naidu","97899 51340","97899 51340",79,60000,60000,"2009-07-14","Male","O-",{Maths:62,Science:66,English:70,Social:64,Tamil:72}],
-  ["STU1030","Ananya Menon","9-A","Rajesh Menon","Shilpa Menon","98407 18265","98407 18265",97,54000,54000,"2010-03-08","Female","A-",{Maths:94,Science:90,English:95,Social:91,Tamil:93}],
-  ["STU1031","Dhruv Patel","9-A","Nikhil Patel","Bhavna Patel","99621 07734","99621 07734",85,54000,34000,"2010-05-21","Male","B+",{Maths:77,Science:73,English:81,Social:75,Tamil:79}],
-  ["STU1032","Lakshmi Devi","9-B","Murugan S","Vasanthi Murugan","94422 96018","94422 96018",91,54000,54000,"2010-08-30","Female","O+",{Maths:80,Science:84,English:78,Social:82,Tamil:90}],
-  ["STU1033","Aditya Rao","9-B","Srinivas Rao","Padma Rao","90475 33852","90475 33852",68,54000,20000,"2010-01-17","Male","A+",{Maths:58,Science:61,English:64,Social:60,Tamil:69}],
-  ["STU1034","Meera Nair","8-A","Vinod Nair","Anita Nair","98844 60219","98844 60219",95,48000,48000,"2011-04-03","Female","B+",{Maths:88,Science:86,English:90,Social:87,Tamil:89}],
-  ["STU1035","Rohan Gupta","8-A","Deepak Gupta","Nisha Gupta","93450 27186","93450 27186",90,48000,26000,"2011-06-25","Male","AB-",{Maths:72,Science:79,English:74,Social:77,Tamil:81}],
-  ["STU1036","Divya Krishnan","7-A","Hari Krishnan","Uma Hari","97517 84093","97517 84093",92,42000,42000,"2012-02-11","Female","O+",{Maths:83,Science:81,English:86,Social:80,Tamil:87}],
-  ["STU1037","Sanjay Pillai","6-A","Anand Pillai","Geetha Anand","96772 41508","96772 41508",87,36000,18000,"2013-09-09","Male","A+",{Maths:75,Science:70,English:72,Social:74,Tamil:76}]
+/** mulberry32 — tiny deterministic PRNG. */
+export function rng(seed: number) {
+  let a = seed >>> 0;
+  return () => {
+    a |= 0; a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+/** Tamil given names for boys. */
+const BOY_NAMES = [
+  "Aravind", "Bharath", "Chandran", "Dhanush", "Elango", "Gokul", "Hariharan", "Iniyan",
+  "Jeevan", "Karthik", "Lokesh", "Mani", "Naveen", "Prakash", "Ragav", "Sathish",
+  "Tamilarasan", "Udhaya", "Vignesh", "Yuvan", "Arun", "Barani", "Deepak", "Ezhil",
+  "Ganesh", "Hemachandran", "Jagan", "Kishore", "Muthu", "Nithish", "Prabhu", "Ramesh",
+  "Sanjay", "Surya", "Vimal", "Ajith", "Balaji", "Dinesh", "Guhan", "Manoj",
+  "Kamalesh", "Mohan", "Praveen", "Senthil", "Thamizh", "Vetri", "Karthikeyan", "Selvan",
+  "Anbu", "Kavin", "Sabari", "Madhan", "Kabilan", "Jayakumar", "Rithik", "Sivakumar"
 ];
 
+/** Tamil given names for girls. */
+const GIRL_NAMES = [
+  "Aishwarya", "Bhavani", "Charulatha", "Divya", "Eswari", "Gayathri", "Harini", "Ilakkiya",
+  "Janani", "Kavya", "Lavanya", "Malini", "Nandhini", "Oviya", "Priyanka", "Ramya",
+  "Sowmya", "Thendral", "Uma", "Vaishnavi", "Yamini", "Abinaya", "Deepika", "Iniya",
+  "Keerthana", "Meena", "Nithya", "Pavithra", "Revathi", "Sangeetha", "Subhashini", "Vidya",
+  "Anitha", "Bhuvana", "Dharani", "Kalaivani", "Madhavi", "Poornima", "Saranya", "Swetha",
+  "Kanmani", "Nivetha", "Preethi", "Roshini", "Sneha", "Vennila", "Aarthi", "Jothika",
+  "Kausalya", "Mahalakshmi", "Nirmala", "Pooja", "Shanmugapriya", "Tamilselvi", "Varsha"
+];
+
+/** Father names (Tamil). */
+const FATHER_NAMES = [
+  "Murugan", "Rajendran", "Selvaraj", "Palanisamy", "Kumaravel", "Sundaram", "Balasubramanian",
+  "Chandrasekaran", "Duraisamy", "Ganapathy", "Ilangovan", "Jayaraman", "Krishnamoorthy",
+  "Loganathan", "Manikandan", "Natarajan", "Perumal", "Ramachandran", "Saravanan", "Thirumurugan",
+  "Venkatesan", " Arumugam", "Dhandapani", "Elumalai", "Gopalakrishnan", "Karunanidhi",
+  "Muthusamy", "Nallathambi", "Pandian", "Ravichandran", "Sivakumar", "Subramani", "Vijayakumar",
+  "Anbarasu", "Bhaskaran", "Chinnasamy", "Kaliyaperumal", "Marimuthu", "Nagarajan", "Ponnusamy"
+].map(s => s.trim());
+
+/** Mother names (Tamil). */
+const MOTHER_NAMES = [
+  "Lakshmi", "Kalaivani", "Meenakshi", "Saraswathi", "Vijaya", "Anjali", "Bhagyalakshmi",
+  "Chitra", "Devaki", "Eswari", "Geetha", "Hemalatha", "Indira", "Jayanthi", "Kamala",
+  "Malliga", "Nagalakshmi", "Poongodi", "Rajeswari", "Selvi", "Thulasi", "Umadevi",
+  "Valli", "Yashoda", "Amudha", "Bhuvaneswari", "Dhanalakshmi", "Kanaga", "Mangayarkarasi",
+  "Parvathi", "Santhi", "Tamilarasi", "Vasanthi", "Alamelu", "Chandra", "Jothi", "Kasthuri",
+  "Nithya", "Punitha", "Sumathi"
+];
+
+/** Chennai residential areas + street names for addresses. */
+const AREAS = [
+  "Anna Nagar", "Adyar", "Velachery", "T. Nagar", "Ambattur", "Tambaram", "Mylapore",
+  "Kodambakkam", "Porur", "Perambur", "Guindy", "Nungambakkam", "Chromepet", "Pallikaranai",
+  "Ashok Nagar", "Villivakkam", "Saidapet", "Thiruvanmiyur", "Madipakkam", "Vadapalani"
+];
+const STREETS = [
+  "Bharathi Street", "Kamaraj Salai", "Gandhi Road", "Nehru Street", "Anna Salai",
+  "Periyar Nagar", "Thiruvalluvar Street", "MGR Nagar", "Bharathidasan Street",
+  "VOC Street", "Kalaignar Salai", "Netaji Road", "Subramaniya Street", "Vivekananda Road"
+];
+
+const BLOODS = ["O+", "A+", "B+", "AB+", "O-", "A-", "B-", "AB-"];
+
+/** Fee by grade level (₹). Higher grades cost more. */
+function feeForGrade(grade: number): number {
+  return { 6: 36000, 7: 42000, 8: 48000, 9: 54000, 10: 60000 }[grade] ?? 42000;
+}
+
+/** Approximate birth year for a grade in academic year 2026-27. */
+function birthYear(grade: number): number {
+  return 2020 - grade; // grade 6 → ~2014? tuned below to feel right
+}
+
+const MONTHS = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"];
+
 export function seedStudents(): Student[] {
-  return RAW.map((r, i) => ({
-    id: "s" + i, adm: r[0], name: r[1], cls: r[2], sec: r[2].split("-")[1],
-    father: r[3], mother: r[4], phone: r[5], whatsapp: r[6],
-    email: r[3].split(" ")[0].toLowerCase() + "@example.com",
-    attendance: r[7], feeTotal: r[8], feePaid: r[9], feeTerms: terms(r[8], r[9]),
-    dob: r[10], gender: r[11], blood: r[12], status: "Active", marks: r[13],
-    admDate: "2021-06-01", address: 12 + i + ", Gandhi Street", city: "Chennai", pin: "600" + (100 + i),
-    payments: r[9] > 0
-      ? [
-          { date: "12 Jun", amount: Math.round(r[9] * 0.6), method: "UPI", receipt: "RC" + (2001 + i), term: "Term 1" },
-          { date: "18 Aug", amount: r[9] - Math.round(r[9] * 0.6), method: "Cash", receipt: "RC" + (3001 + i), term: "Term 2" }
-        ]
-      : []
-  }));
+  const students: Student[] = [];
+  let idx = 0;
+  let adm = 1024;
+
+  CLASS_LIST.forEach((cls, ci) => {
+    const grade = parseInt(cls, 10);
+    const sec = cls.split("-")[1];
+    const feeTotal = feeForGrade(grade);
+    // Deterministic per-section seed.
+    const r = rng(1000 + ci * 97);
+    const PER_SECTION = 30;
+
+    for (let n = 0; n < PER_SECTION; n++) {
+      const isBoy = r() < 0.52;
+      const given = isBoy
+        ? BOY_NAMES[Math.floor(r() * BOY_NAMES.length)]
+        : GIRL_NAMES[Math.floor(r() * GIRL_NAMES.length)];
+      const father = FATHER_NAMES[Math.floor(r() * FATHER_NAMES.length)];
+      const mother = MOTHER_NAMES[Math.floor(r() * MOTHER_NAMES.length)];
+      // Tamil naming: mix the common school-register conventions —
+      //  ~45% "Given Father" (father name as surname),
+      //  ~35% "F. Given"    (initial-first),
+      //  ~20% "Given F."    (given + father initial).
+      const nf = r();
+      const name = nf < 0.45 ? `${given} ${father}`
+                 : nf < 0.80 ? `${father[0]}. ${given}`
+                 : `${given} ${father[0]}.`;
+
+      // Phone: valid-looking Indian mobile (starts 6–9).
+      const prefix = [98410, 98842, 94441, 90031, 93810, 97899, 98407, 99621, 94422, 90475][Math.floor(r() * 10)];
+      const tail = String(Math.floor(r() * 90000) + 10000);
+      const phone = `${prefix} ${tail}`.replace(/(\d{5}) (\d{5})/, "$1 $2");
+
+      // Attendance: mostly healthy, a few outliers per section.
+      let attendance = 84 + Math.floor(r() * 15);        // 84–98
+      if (r() < 0.12) attendance = 66 + Math.floor(r() * 14); // ~12% below 80
+
+      // Marks: a per-student ability band with subject jitter.
+      const base = 55 + Math.floor(r() * 38);            // 55–92 ability
+      const jit = () => Math.max(35, Math.min(99, base + Math.floor(r() * 18) - 9));
+      const marks: Record<string, number> = {
+        Maths: jit(), Science: jit(), English: jit(), Social: jit(), Tamil: jit()
+      };
+
+      // Fee state: ~45% fully paid, ~35% partial, ~20% unpaid.
+      const roll = r();
+      let feePaid: number;
+      if (roll < 0.45) feePaid = feeTotal;
+      else if (roll < 0.80) feePaid = Math.round((feeTotal / 3) * (1 + Math.floor(r() * 2)) / 100) * 100;
+      else feePaid = 0;
+
+      const by = birthYear(grade) - 1; // shift so grade 10 ≈ 2009
+      const dob = `${by}-${MONTHS[Math.floor(r() * 12)]}-${String(Math.floor(r() * 27) + 1).padStart(2, "0")}`;
+      const area = AREAS[Math.floor(r() * AREAS.length)];
+      const street = STREETS[Math.floor(r() * STREETS.length)];
+
+      const paid = feePaid;
+      const payments = paid > 0
+        ? (() => {
+            const first = Math.round(paid * 0.6);
+            const list = [{ date: "12 Jun", amount: first, method: "UPI", receipt: "RC" + (2001 + idx), term: "Term 1" }];
+            if (paid - first > 0) list.push({ date: "05 Aug", amount: paid - first, method: r() < 0.5 ? "Cash" : "Bank Transfer", receipt: "RC" + (5001 + idx), term: "Term 2" });
+            return list;
+          })()
+        : [];
+
+      students.push({
+        id: "s" + idx,
+        adm: "STU" + (adm++),
+        name, cls, sec,
+        father, mother,
+        phone, whatsapp: phone,
+        email: given.toLowerCase() + "." + father.toLowerCase() + "@example.com",
+        attendance,
+        feeTotal, feePaid,
+        feeTerms: terms(feeTotal, feePaid),
+        dob,
+        gender: isBoy ? "Male" : "Female",
+        blood: BLOODS[Math.floor(r() * BLOODS.length)],
+        status: "Active",
+        marks,
+        admDate: `${2026 - (grade - 6)}-06-0${1 + (n % 5)}`,
+        address: `${1 + Math.floor(r() * 180)}, ${street}`,
+        city: "Chennai",
+        pin: "600" + String(Math.floor(r() * 118) + 1).padStart(3, "0"),
+        payments
+      });
+      idx++;
+    }
+  });
+
+  return students;
 }
 
 export function seedAdmissions(): Enquiry[] {
@@ -360,10 +505,10 @@ export function seedBuses(): Bus[] {
 }
 
 export const AUDIENCES: Record<string, number> = {
-  "Entire School": 842,
-  "Class 10-A": 40,
-  "Section A": 286,
-  "Absent Students": 42,
-  "Fee Pending Students": 96,
+  "Entire School": 240,
+  "Class 10-A": 30,
+  "Section A": 180,
+  "Absent Students": 28,
+  "Fee Pending Students": 66,
   "Individual Parent": 1
 };

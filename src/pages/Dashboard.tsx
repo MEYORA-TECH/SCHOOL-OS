@@ -47,7 +47,7 @@ export default function Dashboard() {
   const openTasks = state.tasks.filter(x => x.status === "Open").length;
 
   const kpis = [
-    { label: "Total Students", value: 800 + state.students.length + 28, sub: "enrolled", Icon: Users, tone: "accent" as const, trend: { dir: "up" as const, text: "+2 this month", good: true } },
+    { label: "Total Students", value: state.students.length, sub: "across 8 sections", Icon: Users, tone: "accent" as const, trend: { dir: "up" as const, text: "+2 this month", good: true } },
     { label: "Teachers", value: state.teachers.length + 40, sub: state.teachers.filter(x => x.status === "On leave").length + " on leave today", Icon: GraduationCap, tone: "ok" as const },
     { label: "Attendance", value: t.attendanceRate.toFixed(1) + "%", sub: `${t.present} present`, Icon: Calendar, tone: "accent" as const, trend: { dir: "up" as const, text: "0.6%", good: true } },
     { label: "Fees Collected", value: lakh(t.collected), sub: "of " + lakh(t.expected), Icon: Wallet, tone: "ok" as const, trend: { dir: "up" as const, text: t.collectionPct + "%", good: true } },

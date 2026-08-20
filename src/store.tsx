@@ -1,7 +1,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useState } from "react";
 import {
   Bus, Enquiry, Mark, Message, Role, StageKey, Student, Task, Teacher, WorklogEntry,
-  seedAdmissions, seedBuses, seedStudents, seedTasks, seedTeachers, seedWorklog
+  rng as rng2, seedAdmissions, seedBuses, seedStudents, seedTasks, seedTeachers, seedWorklog
 } from "./data";
 
 export interface State {
@@ -25,11 +25,36 @@ export interface State {
   messages: Message[];
 }
 
+/* The seeded roster is the whole school; every headline total derives from it. */
+const ROSTER = seedStudents();
+
+/** Attendance for the day: mark a student "present" when their running rate ≥ 80,
+ *  plus a small realistic dip, so the day's numbers track the roster. */
+const attSeed = rng2(7);
+const presentCount = ROSTER.reduce((a, s) => a + (s.attendance >= 80 && attSeed() > 0.06 ? 1 : 0), 0);
+const rosterTotal = ROSTER.length;
+
+/** Class-wise rate for the day = average attendance of that section (rounded). */
+function classRatesFromRoster(students: Student[]): Record<string, number> {
+  const acc: Record<string, { sum: number; n: number }> = {};
+  for (const s of students) {
+    (acc[s.cls] ||= { sum: 0, n: 0 });
+    acc[s.cls].sum += s.attendance;
+    acc[s.cls].n += 1;
+  }
+  const out: Record<string, number> = {};
+  for (const cls of Object.keys(acc)) out[cls] = Math.round(acc[cls].sum / acc[cls].n);
+  return out;
+}
+
+const feeExpectedTotal = ROSTER.reduce((a, s) => a + s.feeTotal, 0);
+const feeCollectedTotal = ROSTER.reduce((a, s) => a + s.feePaid, 0);
+
 const initial: State = {
   signedIn: false,
   role: "principal",
   teacherId: "t0",
-  students: seedStudents(),
+  students: ROSTER,
   admissions: seedAdmissions(),
   teachers: seedTeachers(),
   worklog: seedWorklog(),
@@ -54,12 +79,12 @@ const initial: State = {
       { name: "Building stability certificate", meta: "PDF · valid to 2028" }
     ]
   },
-  attTotals: { present: 796, absent: 46, total: 842 },
-  classRates: { "10-A": 95, "10-B": 93, "9-A": 97, "9-B": 91 },
+  attTotals: { present: presentCount, absent: rosterTotal - presentCount, total: rosterTotal },
+  classRates: classRatesFromRoster(ROSTER),
   attSaved: {},
   extraCollected: 0,
-  feeExpected: 1200000,
-  feeCollectedBase: 920000,
+  feeExpected: feeExpectedTotal,
+  feeCollectedBase: feeCollectedTotal,
   messages: []
 };
 
@@ -77,8 +102,8 @@ export type Action =
   | { type: "saveMarks"; edits: Record<string, Record<string, number>> }
   | { type: "reset" };
 
-/** One saved class stands in for ~3 classes of the same size in this demo school. */
-const CLASS_WEIGHT = 3;
+/** The roster is the whole school now, so a saved class counts its own students 1:1. */
+const CLASS_WEIGHT = 1;
 
 function reducer(state: State, action: Action): State {
   switch (action.type) {
@@ -154,7 +179,8 @@ function reducer(state: State, action: Action): State {
   }
 }
 
-const KEY = "schoolos.state.v2";
+/* v3: full ~240-student Tamil roster; bump invalidates the old 14-student cache. */
+const KEY = "schoolos.state.v3";
 
 function load(): State {
   try {
