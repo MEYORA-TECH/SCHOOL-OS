@@ -187,6 +187,7 @@ export function FeeStudent() {
     `Pending amount: ${inr(pending)}. Kindly pay at the school office or via UPI. Thank you.`;
 
   function record() {
+    if (!s) return;
     const n = parseInt(amount, 10);
     if (!n || n <= 0) { toast("Enter an amount", "Payment amount is required"); return; }
     dispatch({ type: "recordPayment", id: s.id, amount: n, method, term });

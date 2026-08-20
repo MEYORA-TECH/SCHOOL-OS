@@ -120,6 +120,7 @@ export function AdmissionDetail() {
   const labels = ["Enquiry received", "Contacted", "School visit", "Application", "Documents", "Admission confirmed"];
 
   function move(dir: 1) {
+    if (!e) return;
     const next = Math.min(STAGES.length - 1, idx + dir);
     dispatch({ type: "setStage", id: e.id, stage: STAGES[next].key });
     toast("Admission updated successfully", e.name + " moved to " + STAGES[next].label);
